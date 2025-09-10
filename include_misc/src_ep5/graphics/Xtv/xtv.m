@@ -1015,6 +1015,17 @@ set(handles.axes1,'dataaspectratio',handles.aspect)
 %set(gca,'box','on','xtick',[],'ytick',[],'xcolor','b','ycolor','b');
 %sp_contrastimage(img,[minval maxval])
 sp_contrastimage(handles)
+
+% mgram: Ensure phase view uses a cyclic colormap and wraps endpoints
+if get(handles.phase_radio, 'Value') == 1
+    colormap(handles.axes1, get_cmp('vikO', 256));
+    caxis(handles.axes1, [-pi pi]);   % lock to full phase range
+else
+    % restore default for non-phase modes
+    colormap(handles.axes1, get(0, 'DefaultFigureColormap'));
+end
+% end mgram
+
 %contrastimage(gcf)
 %axis i
 %set(gca,'box','on','xtick',[],'ytick',[],'xcolor','b','ycolor','b');
@@ -1359,6 +1370,16 @@ end
 
 
 sp_contrastimage(handles)
+
+% mgram: Ensure phase view uses a cyclic colormap and wraps endpoints
+if get(handles.phase_radio, 'Value') == 1
+    colormap(handles.axes1, get_cmp('vikO', 256));
+    caxis(handles.axes1, [-pi pi]);   % lock to full phase range
+else
+    % restore default for non-phase modes
+    colormap(handles.axes1, get(0, 'DefaultFigureColormap'));
+end
+% end mgram
 
 %sp_contrastimage(handles)
 
