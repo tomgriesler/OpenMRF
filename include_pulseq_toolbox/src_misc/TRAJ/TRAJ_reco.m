@@ -5,15 +5,38 @@ if nargin<1
 end
 
 %% load trajectory dataset
-[twix_obj, study_info, PULSEQ] = pulseq_read_meas_siemens(study, []);
-rawdata = SPI_get_rawdata(twix_obj);
-rawdata = permute(rawdata, [3, 1, 2]);
-clear twix_obj;
 
-Ncoils = size(rawdata,1);  % number of coils
-NR     = PULSEQ.TRAJ.NR;   % number of spiral arms
-Nread  = size(rawdata, 3); % number of sampling points
-Nav    = PULSEQ.TRAJ.Nav;  % number of averages
+% load non-splitted data
+if ~iscell(study)
+    [twix_obj, study_info, PULSEQ] = pulseq_read_meas_siemens(study, []);
+    rawdata = SPI_get_rawdata(twix_obj);    
+    clear twix_obj;
+
+% load splitted data
+else
+    Nsplit    = numel(study);
+    rawdata_x = [];
+    rawdata_y = [];
+    for j = 1:Nsplit
+        if j==1
+            [twix_obj, study_info, PULSEQ] = pulseq_read_meas_siemens(study{j}, []);
+        else
+            twix_obj = pulseq_read_meas_siemens(study{j}, []);
+        end
+            temp_rawdata = SPI_get_rawdata(twix_obj);            
+            rawdata_x    = [rawdata_x; temp_rawdata(1:size(temp_rawdata,1)/2,:,:)];
+            rawdata_y    = [rawdata_y; temp_rawdata(size(temp_rawdata,1)/2+1:end,:,:)];
+            clear twix_obj temp_rawdata;
+    end
+    rawdata = [rawdata_x; rawdata_y];
+    clear rawdata_x rawdata_y;
+end
+
+rawdata = permute(rawdata, [3, 1, 2]);
+Ncoils  = size(rawdata,1);  % number of coils
+NR      = PULSEQ.TRAJ.NR;   % number of spiral arms
+Nread   = size(rawdata, 3); % number of sampling points
+Nav     = PULSEQ.TRAJ.Nav;  % number of averages
 
 %% Duyn method: 10.1006/jmre.1998.1396
 if strcmp(PULSEQ.TRAJ.method, 'duyn')
