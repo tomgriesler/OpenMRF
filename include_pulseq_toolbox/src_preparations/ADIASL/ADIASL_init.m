@@ -39,22 +39,17 @@ if strcmp(ADIASL.mode, 'on')
     % calc prep times
     ADIASL.adia_prep_times = ADIASL.N_HS * mr.calcDuration(ADIASL.rf);
 
-    % crusher z
-    ADIASL.crush_nTwist = 8; % [] number of 2pi twists in read/phase/slice direction of voxel
-    ADIASL.crush_area_z = ADIASL.crush_nTwist / FOV.dz;  % [1/m]
-    ADIASL.gz_crush     = mr.makeTrapezoid('z', 'Area', ADIASL.crush_area_z, 'maxGrad', system.maxGrad/sqrt(3), 'maxSlew', system.maxSlew/sqrt(3), 'system', system);
-
-    % crusher x
-    ADIASL.crush_area_x   = ADIASL.crush_nTwist / FOV.dx;  % [1/m]
-    ADIASL.gx_crush       = mr.makeTrapezoid('x', 'Area', ADIASL.crush_area_z, 'maxGrad', system.maxGrad/sqrt(3), 'maxSlew', system.maxSlew/sqrt(3), 'system', system);
-    ADIASL.gx_crush.delay = ceil(ADIASL.gz_crush.riseTime*1.05 / system.gradRasterTime) * system.gradRasterTime;
-
-    % crusher y
-    ADIASL.crush_area_y   = ADIASL.crush_nTwist / FOV.dy;  % [1/m]
-    ADIASL.gy_crush       = mr.makeTrapezoid('x', 'Area', ADIASL.crush_area_z, 'maxGrad', system.maxGrad/sqrt(3), 'maxSlew', system.maxSlew/sqrt(3), 'system', system);
-    ADIASL.gy_crush.delay = ceil(ADIASL.gz_crush.riseTime*1.05 / system.gradRasterTime) * system.gradRasterTime + ...
-                            ceil(ADIASL.gx_crush.riseTime*1.05 / system.gradRasterTime) * system.gradRasterTime;
-
+    % calculate crusher objects
+    if ~isfield(ADIASL, 'crush_nTwists_x')
+        ADIASL.crush_nTwists_x = 4;   % [] number of 2pi twists in x direction
+    end
+    if ~isfield(ADIASL, 'crush_nTwists_y')
+        ADIASL.crush_nTwists_y = 4;   % [] number of 2pi twists in y direction
+    end
+    if ~isfield(ADIASL, 'crush_nTwists_z')
+        ADIASL.crush_nTwists_z = 11.3;   % [] number of 2pi twists in z direction
+    end
+    [ADIASL.gx_crush, ADIASL.gy_crush, ADIASL.gz_crush] = CRUSH_x_y_z(ADIASL.crush_nTwists_x, ADIASL.crush_nTwists_y, ADIASL.crush_nTwists_z, FOV.dx, FOV.dy, FOV.dz, 1/sqrt(3), 1/sqrt(3), system);
     ADIASL.tcrush = mr.calcDuration(ADIASL.gx_crush, ADIASL.gy_crush, ADIASL.gz_crush);
     
 end

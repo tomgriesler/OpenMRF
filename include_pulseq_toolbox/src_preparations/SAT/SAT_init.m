@@ -50,31 +50,17 @@ if strcmp(SAT.mode, 'on')
 
     end
 
-    SAT.lim_grad = 1/sqrt(3);
-    SAT.lim_slew = 1/sqrt(3);
-
-    if ~isfield(SAT, 'crush_nTwist_x')
-        SAT.crush_nTwist_x = 8;   % [] number of 2pi twists in x direction
+    % calculate crusher objects
+    if ~isfield(SAT, 'crush_nTwists_x')
+        SAT.crush_nTwists_x = 8;   % [] number of 2pi twists in x direction
     end
-    if ~isfield(SAT, 'crush_nTwist_y')
-        SAT.crush_nTwist_y = 8;   % [] number of 2pi twists in y direction
+    if ~isfield(SAT, 'crush_nTwists_y')
+        SAT.crush_nTwists_y = 8;   % [] number of 2pi twists in y direction
     end
-    if ~isfield(SAT, 'crush_nTwist_z')
-        SAT.crush_nTwist_z = 8;   % [] number of 2pi twists in z direction
+    if ~isfield(SAT, 'crush_nTwists_z')
+        SAT.crush_nTwists_z = 13.7;   % [] number of 2pi twists in z direction
     end
-
-    SAT.crush_area_x   = SAT.crush_nTwist_x / FOV.dx;  % [1/m]
-    SAT.gx_crush       = mr.makeTrapezoid('x', 'Area', SAT.crush_area_x, 'maxGrad', system.maxGrad*SAT.lim_grad, 'maxSlew', system.maxSlew*SAT.lim_slew, 'system', system);
-    SAT.tcrush_x       = mr.calcDuration(SAT.gx_crush);
-
-    SAT.crush_area_y   = SAT.crush_nTwist_y / FOV.dy;  % [1/m]
-    SAT.gy_crush       = mr.makeTrapezoid('y', 'Area', SAT.crush_area_y, 'maxGrad', system.maxGrad*SAT.lim_grad, 'maxSlew', system.maxSlew*SAT.lim_slew, 'system', system);
-    SAT.tcrush_y       = mr.calcDuration(SAT.gy_crush);
-
-    SAT.crush_area_z   = SAT.crush_nTwist_z / FOV.dz;  % [1/m]
-    SAT.gz_crush       = mr.makeTrapezoid('z', 'Area', SAT.crush_area_z, 'maxGrad', system.maxGrad*SAT.lim_grad, 'maxSlew', system.maxSlew*SAT.lim_slew, 'system', system);
-    SAT.tcrush_z       = mr.calcDuration(SAT.gz_crush);    
-    SAT.gz_crush.delay = ceil(SAT.gy_crush.riseTime*1.05 / system.gradRasterTime) * system.gradRasterTime;   
+    [SAT.gx_crush, SAT.gy_crush, SAT.gz_crush] = CRUSH_x_y_z(SAT.crush_nTwists_x, SAT.crush_nTwists_y, SAT.crush_nTwists_z, FOV.dx, FOV.dy, FOV.dz, 1/sqrt(3), 1/sqrt(3), system);
 
     % recovery delay
     if isfield(SAT, 'sat_rec_time')

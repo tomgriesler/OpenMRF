@@ -3,11 +3,12 @@ function MLEV = MLEV_init(MLEV, FOV, system)
     % MLEV parameter initialization
     
     if ~isfield(MLEV, 't_inter')
-        MLEV.t_inter = system.gradRasterTime;
+        MLEV.t_inter = 2*system.gradRasterTime;
     end
-    if MLEV.t_inter < system.gradRasterTime
-        MLEV.t_inter = system.gradRasterTime;
-    end
+    if MLEV.t_inter < 2*system.gradRasterTime
+        MLEV.t_inter = 2*system.gradRasterTime;
+    end    
+
     if ~isfield(MLEV, 'ref_phase')
         MLEV.ref_phase = 0;
     end
@@ -49,26 +50,33 @@ function MLEV = MLEV_init(MLEV, FOV, system)
         end
     end
 
-    if ~isfield(MLEV, 'crush_nTwists')
-        MLEV.crush_nTwists = 4;
+    if ~isfield(MLEV, 'crush_nTwists_x')
+        MLEV.crush_nTwists_x = 4;   % [] number of 2pi twists in x direction
+    end
+    if ~isfield(MLEV, 'crush_nTwists_y')
+        MLEV.crush_nTwists_y = 4;   % [] number of 2pi twists in y direction
+    end
+    if ~isfield(MLEV, 'crush_nTwists_z')
+        MLEV.crush_nTwists_z = 11.3;   % [] number of 2pi twists in z direction
     end
     
     MLEV.n_prep         = numel(MLEV.n_mlev);
     MLEV.n_composite    = MLEV.n_mlev * 4;
     MLEV.tau_composite  = 1 / MLEV.fSL;
     MLEV.tau_composite  = round(MLEV.tau_composite/system.gradRasterTime/4) * system.gradRasterTime*4;
-    MLEV.t_inter        = round(MLEV.t_inter/system.gradRasterTime) * system.gradRasterTime;
+    MLEV.t_inter        = ceil(MLEV.t_inter/system.gradRasterTime/2)*system.gradRasterTime*2;
     MLEV.t2p_prep_times = MLEV.n_composite * MLEV.tau_composite; 
-    MLEV.t2_prep_times  = (MLEV.n_composite + 1) * MLEV.t_inter;
+    MLEV.t2_prep_times  = MLEV.n_composite * MLEV.t_inter;
     MLEV.fSL            = 1 / MLEV.tau_composite;
     
     % get MLEV objects
     MLEV.MLEV_objs.d1                                                           = mr.makeDelay(system.gradRasterTime);
-    MLEV.MLEV_objs.t_inter                                                      = mr.makeDelay(MLEV.t_inter);
+    MLEV.MLEV_objs.t_inter_1                                                    = mr.makeDelay(MLEV.t_inter/2);
+    MLEV.MLEV_objs.t_inter_2                                                    = mr.makeDelay(MLEV.t_inter);
     [MLEV.MLEV_objs.rf_90_td, MLEV.MLEV_objs.rf_90_tu]                          = MLEV_get_objs_EXC(MLEV, system);
     MLEV.MLEV_objs.rf_comp_pos                                                  = MLEV_get_objs_COMP(system, MLEV.tau_composite, MLEV.ref_phase + pi/2);
     MLEV.MLEV_objs.rf_comp_neg                                                  = MLEV_get_objs_COMP(system, MLEV.tau_composite, MLEV.ref_phase - pi/2);
-    [MLEV.MLEV_objs.gx_crush, MLEV.MLEV_objs.gy_crush, MLEV.MLEV_objs.gz_crush] = MLEV_get_objs_CRUSH(MLEV, FOV, system);
+    [MLEV.MLEV_objs.gx_crush, MLEV.MLEV_objs.gy_crush, MLEV.MLEV_objs.gz_crush] = CRUSH_x_y_z(MLEV.crush_nTwists_x, MLEV.crush_nTwists_y, MLEV.crush_nTwists_z, FOV.dx, FOV.dy, FOV.dz, 1/sqrt(3), 1/sqrt(3), system);
     [MLEV.MLEV_objs.cycling_list]                                               = MLEV_get_cycling_list(max(MLEV.n_mlev));
     
     % calc total prep durations
@@ -117,30 +125,6 @@ function rf = MLEV_get_objs_COMP(system, tau, phaseOffset)
 end
 
 %% ----------------------------------------------------------------------------------------
-function [gx_crush, gy_crush, gz_crush] = MLEV_get_objs_CRUSH(MLEV, FOV, system)
-
-    % Crusher Gradients after Spin-Locking
-    lim_grad       = 0.75;  % limit for maximum gradient amplitude
-    lim_slew       = 0.75;  % limit for maximum slew rate
-    
-    % crush x
-    crush_area_x   = MLEV.crush_nTwists / FOV.dx;  % [1/m]
-    gx_crush       = mr.makeTrapezoid('x', 'Area', crush_area_x, 'maxGrad', system.maxGrad * lim_grad, 'maxSlew', system.maxSlew * lim_slew, 'system', system);
-    
-    % crush y
-    crush_area_y   = MLEV.crush_nTwists / FOV.dy;  % [1/m]
-    gy_crush       = mr.makeTrapezoid('y', 'Area', crush_area_y, 'maxGrad', system.maxGrad * lim_grad, 'maxSlew', system.maxSlew * lim_slew, 'system', system);
-    gy_crush.delay = ceil(gx_crush.riseTime*1.05 / system.gradRasterTime) * system.gradRasterTime;
-    
-    % crush z
-    crush_area_z   = MLEV.crush_nTwists / FOV.dz;  % [1/m]
-    gz_crush       = mr.makeTrapezoid('z', 'Area', crush_area_z, 'maxGrad', system.maxGrad * lim_grad, 'maxSlew', system.maxSlew * lim_slew, 'system', system);
-    gz_crush.delay = gy_crush.delay + ceil(gy_crush.riseTime*1.05 / system.gradRasterTime) * system.gradRasterTime;
-    gz_crush       = []; % disable z crusher
-
-end
-
-%% ----------------------------------------------------------------------------------------
 function cycling_list = MLEV_get_cycling_list(n_mlev)
 
     cycling_list = zeros(n_mlev, 4);
@@ -166,7 +150,8 @@ end
 function duration = MLEV_get_duration(MLEV, loop_MLEV)
 
     % temporary MLEV objects
-    t_inter      = MLEV.MLEV_objs.t_inter;
+    t_inter_1    = MLEV.MLEV_objs.t_inter_1;
+    t_inter_2    = MLEV.MLEV_objs.t_inter_2;
     rf_90_td     = MLEV.MLEV_objs.rf_90_td;
     rf_90_tu     = MLEV.MLEV_objs.rf_90_tu;
     rf_comp_pos  = MLEV.MLEV_objs.rf_comp_pos;
@@ -177,7 +162,7 @@ function duration = MLEV_get_duration(MLEV, loop_MLEV)
     % calc MLEV durations
     duration = 0;
     duration = duration + mr.calcDuration(rf_90_td);
-    duration = duration + mr.calcDuration(t_inter);
+    duration = duration + mr.calcDuration(t_inter_1);
     
     for temp_loop = 1 : MLEV.n_composite(loop_MLEV)
     
@@ -186,12 +171,15 @@ function duration = MLEV_get_duration(MLEV, loop_MLEV)
         end
         if cycling_list(temp_loop) == -1
             duration = duration + mr.calcDuration(rf_comp_neg);
-        end    
-        duration = duration + mr.calcDuration(t_inter);
+        end
+        if temp_loop < MLEV.n_composite(loop_MLEV)
+            duration = duration + mr.calcDuration(t_inter_2);
+        end
     
     end
     clear temp_loop;
     
+    duration = duration + mr.calcDuration(t_inter_1);
     duration = duration + mr.calcDuration(rf_90_tu);
 
 end

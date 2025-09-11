@@ -50,10 +50,18 @@ if strcmp(FAT.mode, 'on')
                                         'use', 'saturation' );
     end
 
-    FAT.crush_nTwist = 5; % [] number of 2pi twists in slice thickness
-    FAT.crush_area   = FAT.crush_nTwist / FOV.dz;  % [1/m]
-    FAT.gz_crush     = mr.makeTrapezoid('z', 'Area', FAT.crush_area, 'maxGrad', system.maxGrad/sqrt(3), 'maxSlew', system.maxSlew/sqrt(3), 'system', system);
-    FAT.tcrush       = mr.calcDuration(FAT.gz_crush);
+    % calculate crusher objects
+    if ~isfield(FAT, 'crush_nTwists_x')
+        FAT.crush_nTwists_x = 2;   % [] number of 2pi twists in x direction
+    end
+    if ~isfield(FAT, 'crush_nTwists_y')
+        FAT.crush_nTwists_y = 2;   % [] number of 2pi twists in y direction
+    end
+    if ~isfield(FAT, 'crush_nTwists_z')
+        FAT.crush_nTwists_z = 5.1;   % [] number of 2pi twists in z direction
+    end
+    [FAT.gx_crush, FAT.gy_crush, FAT.gz_crush] = CRUSH_x_y_z(FAT.crush_nTwists_x, FAT.crush_nTwists_y, FAT.crush_nTwists_z, FOV.dx, FOV.dy, FOV.dz, 1/sqrt(3), 1/sqrt(3), system);
+    FAT.tcrush = mr.calcDuration(FAT.gx_crush, FAT.gy_crush, FAT.gz_crush);
 
 end
 

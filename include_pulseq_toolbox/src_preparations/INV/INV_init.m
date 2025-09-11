@@ -36,21 +36,17 @@ function INV = INV_init(INV, FOV, system)
         clear ahp;
     end
 
-    % crusher z
-    INV.crush_nTwist = 8; % [] number of 2pi twists in read/phase/slice direction of voxel
-    INV.crush_area_z = INV.crush_nTwist / FOV.dz;  % [1/m]
-    INV.gz_crush     = mr.makeTrapezoid('z', 'Area', INV.crush_area_z, 'maxGrad', system.maxGrad/sqrt(3), 'maxSlew', system.maxSlew/sqrt(3), 'system', system);
-
-    % crusher x
-    INV.crush_area_x   = INV.crush_nTwist / FOV.dx;  % [1/m]
-    INV.gx_crush       = mr.makeTrapezoid('x', 'Area', INV.crush_area_z, 'maxGrad', system.maxGrad/sqrt(3), 'maxSlew', system.maxSlew/sqrt(3), 'system', system);
-    INV.gx_crush.delay = ceil(INV.gz_crush.riseTime*1.05 / system.gradRasterTime) * system.gradRasterTime;
-
-    % crusher y
-    INV.crush_area_y   = INV.crush_nTwist / FOV.dy;  % [1/m]
-    INV.gy_crush       = mr.makeTrapezoid('x', 'Area', INV.crush_area_z, 'maxGrad', system.maxGrad/sqrt(3), 'maxSlew', system.maxSlew/sqrt(3), 'system', system);
-    INV.gy_crush.delay = ceil(INV.gz_crush.riseTime*1.05 / system.gradRasterTime) * system.gradRasterTime + ...
-                         ceil(INV.gx_crush.riseTime*1.05 / system.gradRasterTime) * system.gradRasterTime;
+    % calculate crusher objects
+    if ~isfield(INV, 'crush_nTwists_x')
+        INV.crush_nTwists_x = 4;   % [] number of 2pi twists in x direction
+    end
+    if ~isfield(INV, 'crush_nTwists_y')
+        INV.crush_nTwists_y = 4;   % [] number of 2pi twists in y direction
+    end
+    if ~isfield(INV, 'crush_nTwists_z')
+        INV.crush_nTwists_z = 11.6;   % [] number of 2pi twists in z direction
+    end
+    [INV.gx_crush, INV.gy_crush, INV.gz_crush] = CRUSH_x_y_z(INV.crush_nTwists_x, INV.crush_nTwists_y, INV.crush_nTwists_z, FOV.dx, FOV.dy, FOV.dz, 1/sqrt(3), 1/sqrt(3), system);
     INV.tcrush = mr.calcDuration(INV.gx_crush, INV.gy_crush, INV.gz_crush);
 
     % recovery delay

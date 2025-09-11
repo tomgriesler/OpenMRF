@@ -10,6 +10,6 @@ if ~strcmp(ADIASL.mode, 'off')
         temp_rf.phaseOffset = (ADIASL.phi + ADIASL.phi_list(temp_n_hs)*pi);        
         seq.addBlock(temp_rf);    
     end
-    seq.addBlock(ADIASL.gz_crush);
+    seq.addBlock(ADIASL.gx_crush, ADIASL.gy_crush, ADIASL.gz_crush);
     clear temp_n_hs temp_rf;
 end

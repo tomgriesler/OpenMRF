@@ -1,6 +1,7 @@
 %% temporary MLEV objects
 d1           = MLEV.MLEV_objs.d1;
-t_inter      = MLEV.MLEV_objs.t_inter;
+t_inter_1    = MLEV.MLEV_objs.t_inter_1;
+t_inter_2    = MLEV.MLEV_objs.t_inter_2;
 rf_90_td     = MLEV.MLEV_objs.rf_90_td;
 rf_90_tu     = MLEV.MLEV_objs.rf_90_tu;
 rf_comp_pos  = MLEV.MLEV_objs.rf_comp_pos;
@@ -13,7 +14,7 @@ cycling_list = cycling_list(:);
 
 %% add MLEV T2 and T2p preparation
 seq.addBlock(rf_90_td);
-seq.addBlock(t_inter);
+seq.addBlock(t_inter_1);
 
 for temp_loop = 1 : MLEV.n_composite(loop_MLEV)
 
@@ -22,18 +23,21 @@ for temp_loop = 1 : MLEV.n_composite(loop_MLEV)
     end
     if cycling_list(temp_loop) == -1
         seq.addBlock(rf_comp_neg);
-    end    
-    seq.addBlock(t_inter);
+    end
+    if temp_loop < MLEV.n_composite(loop_MLEV)
+        seq.addBlock(t_inter_2);
+    end
 
 end
 clear temp_loop;
 
+seq.addBlock(t_inter_1);
 seq.addBlock(rf_90_tu);
 seq.addBlock(d1);
 
 %% add crusher gradients
-seq.addBlock(gx_crush, gy_crush);
+seq.addBlock(gx_crush, gy_crush, gz_crush);
 seq.addBlock(d1);
 
 %% clear temp objects
-clear d1 t_inter rf_90_td rf_90_tu rf_comp_pos rf_comp_neg gx_crush gy_crush gz_crush cycling_list;
+clear d1 t_inter_1 t_inter_2 rf_90_td rf_90_tu rf_comp_pos rf_comp_neg gx_crush gy_crush gz_crush cycling_list;

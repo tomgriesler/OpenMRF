@@ -30,9 +30,6 @@ SL.rfc_flip_angle = pi;           % [rad] flip angle
 SL.rfc_time       = 3.0 *1e-3;    % [s] refocusing time
 SL.rfc_tbw        = 4;            % [ ] time bandwith product, only for sinc/sigpy_SLR
 
-% cursher gradients
-SL.crush_nTwists = 6; % [ ] number of twists in voxel dimensions
-
 SL = SL_init(SL, FOV, system);
 
 for loop_SL = 1:SL.nSL

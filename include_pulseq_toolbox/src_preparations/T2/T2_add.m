@@ -21,7 +21,7 @@ seq.addBlock(rf_90_tu);
 seq.addBlock(d1);
 
 %% add crusher gradients
-seq.addBlock(gz_crush);
+seq.addBlock(gx_crush, gy_crush, gz_crush);
 seq.addBlock(d1);
 
 %% clear temp objects

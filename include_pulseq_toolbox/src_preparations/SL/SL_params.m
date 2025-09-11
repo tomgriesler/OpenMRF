@@ -12,6 +12,3 @@ SL.adia_wmax = 600 * 2*pi;       % [rad/s] amplitude of adiabatic pulse
 SL.rfc_mode  = 'sinc';           % 'sinc', 'sigpy_SLR', 'bp' or 'comp'
 SL.rfc_time  = 4.0 *1e-3;        % [s] refocusing time
 SL.rfc_tbw   = 4;                % [ ] time bandwith product, only for sinc/sigpy_SLR
-
-% cursher gradients
-SL.crush_nTwists = 8; % [ ] number of twists in voxel dimensions

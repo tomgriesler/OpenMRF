@@ -101,8 +101,14 @@ function SL = SL_init(SL, FOV, system)
             SL.rfc_time = 2.0 * 1e-3;
         end
     end
-    if ~isfield(SL, 'crush_nTwists')
-        SL.crush_nTwists = 8;   
+    if ~isfield(SL, 'crush_nTwists_x')
+        SL.crush_nTwists_x = 4;   % [] number of 2pi twists in x direction
+    end
+    if ~isfield(SL, 'crush_nTwists_y')
+        SL.crush_nTwists_y = 4;   % [] number of 2pi twists in y direction
+    end
+    if ~isfield(SL, 'crush_nTwists_z')
+        SL.crush_nTwists_z = 11.3;   % [] number of 2pi twists in z direction
     end
 
     %% clear unnecessary parameters
@@ -207,7 +213,7 @@ function SL = SL_init(SL, FOV, system)
         [SL.SL_objs(j).EXC1, SL.SL_objs(j).EXC2]                                 = SL_get_objs_EXC(SL, system, j);
         [SL.SL_objs(j).RFC1, SL.SL_objs(j).RFC2]                                 = SL_get_objs_RFC(SL, system, j);
         [SL.SL_objs(j).SL1, SL.SL_objs(j).SL2, SL.SL_objs(j).SL3]                = SL_get_objs_SL(SL, system, j);
-        [SL.SL_objs(j).gx_crush, SL.SL_objs(j).gy_crush, SL.SL_objs(j).gz_crush] = SL_get_objs_CRUSH(SL, FOV, system);
+        [SL.SL_objs(j).gx_crush, SL.SL_objs(j).gy_crush, SL.SL_objs(j).gz_crush] = CRUSH_x_y_z(SL.crush_nTwists_x, SL.crush_nTwists_y, SL.crush_nTwists_z, FOV.dx, FOV.dy, FOV.dz, 1/sqrt(3), 1/sqrt(3), system);
         SL.SL_objs(j).d1                                                         = mr.makeDelay(system.gradRasterTime);
         SL.SL_objs(j).d2                                                         = mr.makeDelay(system.gradRasterTime);
         SL.SL_objs(j).duration                                                   = SL_get_duration(SL.SL_objs(j));
@@ -423,29 +429,6 @@ function [SL1, SL2, SL3] = SL_get_objs_SL(SL, system, loop_SL)
             SL3 = mr.makeDelay(tSL/4);
         end
     end
-
-end
-
-%% ----------------------------------------------------------------------------------------
-function [gx_crush, gy_crush, gz_crush] = SL_get_objs_CRUSH(SL, FOV, system)
-
-    % Crusher Gradients after Spin-Locking
-    lim_grad       = 1/sqrt(3);  % limit for maximum gradient amplitude
-    lim_slew       = 1/sqrt(3);  % limit for maximum slew rate
-    
-    % crush x
-    crush_area_x   = SL.crush_nTwists / FOV.dx;  % [1/m]
-    gx_crush       = mr.makeTrapezoid('x', 'Area', crush_area_x, 'maxGrad', system.maxGrad * lim_grad, 'maxSlew', system.maxSlew * lim_slew, 'system', system);
-    
-    % crush y
-    crush_area_y   = SL.crush_nTwists / FOV.dy;  % [1/m]
-    gy_crush       = mr.makeTrapezoid('y', 'Area', crush_area_y, 'maxGrad', system.maxGrad * lim_grad, 'maxSlew', system.maxSlew * lim_slew, 'system', system);
-    gy_crush.delay = ceil(gx_crush.riseTime*1.05 / system.gradRasterTime) * system.gradRasterTime;
-    
-    % crush z
-    crush_area_z   = SL.crush_nTwists / FOV.dz;  % [1/m]
-    gz_crush       = mr.makeTrapezoid('z', 'Area', crush_area_z, 'maxGrad', system.maxGrad * lim_grad, 'maxSlew', system.maxSlew * lim_slew, 'system', system);
-    gz_crush.delay = gy_crush.delay + ceil(gy_crush.riseTime*1.05 / system.gradRasterTime) * system.gradRasterTime;
 
 end
 

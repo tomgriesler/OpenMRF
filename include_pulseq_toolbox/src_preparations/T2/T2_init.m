@@ -43,8 +43,14 @@ function T2 = T2_init(T2, FOV, system)
         end
     end
 
-    if ~isfield(T2, 'crush_nTwists')
-        T2.crush_nTwists = 8;
+    if ~isfield(T2, 'crush_nTwists_x')
+        T2.crush_nTwists_x = 4;   % [] number of 2pi twists in x direction
+    end
+    if ~isfield(T2, 'crush_nTwists_y')
+        T2.crush_nTwists_y = 4;   % [] number of 2pi twists in y direction
+    end
+    if ~isfield(T2, 'crush_nTwists_z')
+        T2.crush_nTwists_z = 11.3;   % [] number of 2pi twists in z direction
     end
     
     T2.n_prep = numel(T2.prep_times);
@@ -54,7 +60,7 @@ function T2 = T2_init(T2, FOV, system)
     [T2.T2_objs.rf_90_td, T2.T2_objs.rf_90_tu] = T2_get_objs_EXC(T2, system);    
     T2.T2_objs.rf_comp_pos                     = T2_get_objs_COMP(system, T2.rfc_dur, T2.ref_phase + pi/2);
     T2.T2_objs.rf_comp_neg                     = T2_get_objs_COMP(system, T2.rfc_dur, T2.ref_phase - pi/2);    
-    [T2.T2_objs.gx_crush, T2.T2_objs.gy_crush, T2.T2_objs.gz_crush] = T2_get_objs_CRUSH(T2, FOV, system);
+    [T2.T2_objs.gx_crush, T2.T2_objs.gy_crush, T2.T2_objs.gz_crush] = CRUSH_x_y_z(T2.crush_nTwists_x, T2.crush_nTwists_y, T2.crush_nTwists_z, FOV.dx, FOV.dy, FOV.dz, 1/sqrt(3), 1/sqrt(3), system);
     
     for j = 1:T2.n_prep
         temp_t_inter  = round( (T2.prep_times(j)-2*T2.rfc_dur) / 4 / system.gradRasterTime) * system.gradRasterTime;
@@ -104,30 +110,6 @@ function rf = T2_get_objs_COMP(system, tau, phaseOffset)
     rf             = mr.makeSincPulse( pi, system, 'Duration', N*system.rfRasterTime, 'timeBwProduct', 2, 'use', 'refocusing' );
     rf.signal      = signal;
     rf.phaseOffset = phaseOffset;
-
-end
-
-%% ----------------------------------------------------------------------------------------
-function [gx_crush, gy_crush, gz_crush] = T2_get_objs_CRUSH(T2, FOV, system)
-
-    % Crusher Gradients after preparation
-    lim_grad       = 1/sqrt(3);  % limit for maximum gradient amplitude
-    lim_slew       = 1/sqrt(3);  % limit for maximum slew rate
-    
-    % crush z
-    crush_area_z   = T2.crush_nTwists / FOV.dz;  % [1/m]
-    gz_crush       = mr.makeTrapezoid('z', 'Area', crush_area_z, 'maxGrad', system.maxGrad * lim_grad, 'maxSlew', system.maxSlew * lim_slew, 'system', system);
-    
-    % crush x
-    crush_area_x   = T2.crush_nTwists / FOV.dx;  % [1/m]
-    gx_crush       = mr.makeTrapezoid('x', 'Area', crush_area_x, 'maxGrad', system.maxGrad * lim_grad, 'maxSlew', system.maxSlew * lim_slew, 'system', system);
-    gx_crush.delay = ceil(gz_crush.riseTime*1.05 / system.gradRasterTime) * system.gradRasterTime;
-    
-    % crush y
-    crush_area_y   = T2.crush_nTwists / FOV.dy;  % [1/m]
-    gy_crush       = mr.makeTrapezoid('y', 'Area', crush_area_y, 'maxGrad', system.maxGrad * lim_grad, 'maxSlew', system.maxSlew * lim_slew, 'system', system);
-    gy_crush.delay = ceil(gz_crush.riseTime*1.05 / system.gradRasterTime) * system.gradRasterTime + ...
-                     ceil(gx_crush.riseTime*1.05 / system.gradRasterTime) * system.gradRasterTime;    
 
 end
 
