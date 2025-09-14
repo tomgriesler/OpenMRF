@@ -1,9 +1,9 @@
 %% load mrf study
 clear
 
-study_path      = 'Q:/data/Pulseq/Rawdata/tomgr/Sola/250729_Open_MRF_NIST_T1_T2_T1p/';
-study_name_mrf  = 'meas_MID00089_FID86991_250725_1421_tomgr_mrf_yun_1.dat';
-study_name_traj = '250806_traj/meas_MID00035_FID92121_250725_1452_tomgr_traj_250725_1421_cor.dat';
+study_path      = 'Q:/data/Pulseq/Rawdata/tomgr/Prisma/250912_OpenMRF_NIST/';
+study_name_mrf  = 'meas_MID00536_FID166993_pulseq_mrf_rep1.dat';
+% study_name_traj = 'meas_MID00035_FID92121_250725_1452_tomgr_traj_250725_1421_cor.dat';
 
 % load twix_object, study info and pulseq meta data
 [twix_obj, study_info, PULSEQ] = pulseq_read_meas_siemens([study_path study_name_mrf]);

@@ -159,6 +159,10 @@ figure('Name', 'Index map', 'NumberTitle', 'off');
 imagesc(ind_map); axis image; axis off; colormap(parula);
 title('index map')
 
+%% randomize receiver phase offsets
+rng(1, "twister");
+cmaps = cmaps.*exp(1i*repmat(rand(size(cmaps,1),1)*2*pi, 1, size(cmaps,2), size(cmaps,3)));
+
 %% output phantom as struct
 phantom.Nxy         = Nxy;
 phantom.Ncoils      = Ncoils;

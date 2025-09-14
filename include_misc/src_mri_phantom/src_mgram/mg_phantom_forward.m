@@ -38,7 +38,7 @@ clear ktraj kx ky kmax fov Ni nufft_args G dcf_all;
 DATA   = zeros(NR, NRead, NCoils, 'single');
 idx_2D = reshape(1:(Nxy)^2, Nxy,Nxy);
 idx_2D = idx_2D(mask2D);
-parfor j = 1:NR
+for j = 1:NR
     temp_mxy    = Mxy(j,:);
     temp_image  = zeros(Nxy, Nxy);
     temp_image(idx_2D) = temp_mxy;
