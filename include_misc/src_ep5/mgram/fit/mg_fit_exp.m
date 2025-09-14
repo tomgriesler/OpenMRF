@@ -38,16 +38,20 @@ end
 
 %% fminsearch(), no boundaries
 if mod_fit == 1
-    opts    = optimset('Display','off');
-    P_start = [A_start, B_start];
-    FITfun  = @(P) P(1) * exp( -xdata/P(2) );
-    RSSfun  = @(P) sum((ydata - FITfun(P)).^2);            
-    P_fit   = fminsearch(RSSfun, P_start, opts);
-    A       = P_fit(1);
-    B       = P_fit(2);
-    TSS     = sum( (ydata-mean(ydata)).^2 );
-    RSS     = RSSfun(P_fit);
-    R2      = 1 - RSS/TSS;
+    opts     = optimset('Display','off');
+    P_start  = [A_start, B_start];
+    FITfun   = @(P) P(1) * exp( -xdata/P(2) );
+    RSSfun   = @(P) sum((ydata - FITfun(P)).^2);
+    P_fit    = fminsearch(RSSfun, P_start, opts);
+    weights  = xdata / P_fit(2);
+    weights  = (-tanh(weights-5) + 1)/2;
+    RSSfun   = @(P) sum((ydata - FITfun(P)).^2 .* weights);
+    P_fit    = fminsearch(RSSfun, P_start, opts);
+    A        = P_fit(1);
+    B        = P_fit(2);
+    TSS      = sum( (ydata-mean(ydata)).^2 );
+    RSS      = RSSfun(P_fit);
+    R2       = 1 - RSS/TSS;        
 end
 
 %% fmincon()
