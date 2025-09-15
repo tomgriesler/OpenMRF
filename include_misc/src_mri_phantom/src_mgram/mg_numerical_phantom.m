@@ -1,20 +1,10 @@
-function phantom = mg_numerical_phantom(Nxy, Ncoils, coil_params, geo)
+function phantom = mg_numerical_phantom(Nxy, geo, coil_params)
+
+if nargin<3
+    coil_params = [];
+end
 
 %% define phantom basics 
-
-% Nxy:    grid size
-% Ncoils: number of simulated coils
-
-% default coil params
-if isempty(coil_params)
-    coil_params.Nb_coils   = Ncoils;
-    coil_params.res        = Nxy * [1, 1];
-    coil_params.type       = 'biot';
-    coil_params.param.FS   = 0.28; % FOV width
-    coil_params.param.D    = 0.25; % Distance center->coil
-    coil_params.param.R    = 0.2;  % radius of the coil
-    coil_params.sens_model = 'sinusoidal';
-end
 
 % geoemtry similar to the Caliber MRI phantom
 if isempty(geo)
@@ -36,14 +26,6 @@ end
 % total number of circular phantom inserts
 n_phant = n_inner + n_outer;
 
-%% simulate coils
-% https://bigwww.epfl.ch/algorithms/mriphantom/
-% https://bigwww.epfl.ch/algorithms/mriphantom/MRIPhantomv0-8.zip
-% Guerquin-Kern M, Lejeune L, Pruessmann KP, Unser M.
-% Realistic analytical phantoms for parallel magnetic resonance imaging.
-% IEEE Trans Med Imaging. 2012 Mar;31(3):626-36.
-% doi: 10.1109/TMI.2011.2174158
-
 % init basic circular phantom
 circ.FOV = [1, 1];
 circ.region{1}.type   = 'ellipse';
@@ -54,60 +36,52 @@ circ.region{1}.width  = r_phant * [1, 1];
 res                   = Nxy * [1, 1];
 mask2D                = imfill(RasterizePhantom(circ, res, 1)==1, 'holes');
 
-% add NIST-like edges
-% [x, y] = meshgrid(1:Nxy, 1:Nxy);
-% phi = linspace(0, 2*pi, 9) + pi/7;
-% phi(end) = [];
-% for j=1:8
-%     xc = round(Nxy/2 + r_phant*Nxy/2*1.08 * cos(phi(j)));
-%     yc = round(Nxy/2 + r_phant*Nxy/2*1.08 * sin(phi(j)));
-%     mask2D(((x - xc).^2 + (y - yc).^2) <= (0.08*Nxy)^2) = false;
-% end
-% clear x y xc yc phi;
+%% simulate coils
 
-% parameter of the model: polynomial degree or bandwith
-if strcmp(coil_params.sens_model, 'polynomial')
-    param = 8;
+if ~isempty(coil_params)
+
+    % https://bigwww.epfl.ch/algorithms/mriphantom/
+    % https://bigwww.epfl.ch/algorithms/mriphantom/MRIPhantomv0-8.zip
+    % Guerquin-Kern M, Lejeune L, Pruessmann KP, Unser M.
+    % Realistic analytical phantoms for parallel magnetic resonance imaging.
+    % IEEE Trans Med Imaging. 2012 Mar;31(3):626-36.
+    % doi: 10.1109/TMI.2011.2174158
+    
+    Ncoils = coil_params.Nb_coils;
+    
+    % parameter of the model: polynomial degree or bandwith
+    if strcmp(coil_params.sens_model, 'polynomial')
+        param = 8;
+    end
+    if strcmp(coil_params.sens_model, 'sinusoidal')
+        param = 6;
+    end
+    coil_params = simulate_sensitivities(coil_params);
+    
+    % coil simultion
+    cmaps    = zeros(Ncoils, Nxy, Nxy);
+    s        = cell(1, Ncoils);
+    sens_num = cell(1, Ncoils);
+    residue  = cell(1, Ncoils);
+    for j = 1 : Ncoils
+        sens             = coil_params.sensitivity(:,:,j);
+        sens             = sens / max(sens(mask2D));
+        s{j}             = SensFitting(sens, coil_params.sens_model, param, mask2D);
+        [~, sens_num{j}] = RasterizePhantom(circ, res, s{j});
+        residue{j}       = sens_num{j}(mask2D) - sens(mask2D);
+        cmaps(j,:,:)     = sens_num{j} .* mask2D;
+        clear sens;
+    end
+    
+    cmaps = cmaps / max(abs(cmaps(:)));
+
+else
+    % load measured cmaps from NIST scan
+    load('cmaps_20_330_330_NIST.mat'); % measured @3T CimaX
+    Ncoils = size(cmaps, 1);
+    cmaps = interp_cmaps_NIST(cmaps, max(sum(mask2D))+2, Nxy);
+    cmaps = cmaps .* permute(repmat(mask2D,1,1,Ncoils), [3,1,2]);
 end
-if strcmp(coil_params.sens_model, 'sinusoidal')
-    param = 6;
-end
-coil_params = simulate_sensitivities(coil_params);
-
-% coil simultion
-cmaps    = zeros(Ncoils, Nxy, Nxy);
-s        = cell(1, Ncoils);
-sens_num = cell(1, Ncoils);
-residue  = cell(1, Ncoils);
-for j = 1 : Ncoils
-    sens             = coil_params.sensitivity(:,:,j);
-    sens             = sens / max(sens(mask2D));
-    s{j}             = SensFitting(sens, coil_params.sens_model, param, mask2D);
-    [~, sens_num{j}] = RasterizePhantom(circ, res, s{j});
-    residue{j}       = sens_num{j}(mask2D) - sens(mask2D);
-    cmaps(j,:,:)     = sens_num{j} .* mask2D;
-    clear sens;
-end
-
-cmaps = cmaps / max(abs(cmaps(:)));
-
-% figure('Name', 'abs(cmaps)', 'NumberTitle', 'off');
-% mycmp = jet(1000);
-% mycmp(1,:) = 0;
-% for j=1:Ncoils
-%     subplot(1, Ncoils, j)
-%     imagesc(abs(squeeze(cmaps(j,:,:))) + 10*(mask2D-1), [0, 1]);   axis image; axis off; colormap(mycmp);
-%     sgtitle('abs() of cmaps')
-% end
-
-% figure('Name', 'angle(cmaps)', 'NumberTitle', 'off');
-% mycmp = plasma(1000);
-% mycmp(1,:) = 0;
-% for j=1:Ncoils
-%     subplot(1, Ncoils, j)
-%     imagesc(angle(squeeze(cmaps(j,:,:))) + 10*(mask2D-1), max(abs(angle(cmaps(:))))*[-1 1]); axis image; axis off; colormap(mycmp);
-%     sgtitle('angle() of cmaps')
-% end
 
 %% create circular phantom inserts -> ind_map 
 
@@ -155,13 +129,8 @@ clear j x y
 % background -> index 1
 ind_map((mask2D==1) & (ind_map==0)) = 1;
 
-figure('Name', 'Index map', 'NumberTitle', 'off');
-imagesc(ind_map); axis image; axis off; colormap(parula);
-title('index map')
-
-%% randomize receiver phase offsets
-rng(1, "twister");
-cmaps = cmaps.*exp(1i*repmat(rand(size(cmaps,1),1)*2*pi, 1, size(cmaps,2), size(cmaps,3)));
+% useful for converting 1d <-> 2d
+pos_map = reshape(1:Nxy^2, [Nxy, Nxy]);
 
 %% output phantom as struct
 phantom.Nxy         = Nxy;
@@ -176,7 +145,30 @@ phantom.geo.r_insrt = r_insrt;
 phantom.coil_params = coil_params;
 phantom.cmaps       = cmaps;
 phantom.ind_map     = ind_map;
+phantom.pos_map     = pos_map;
 phantom.mask2D      = mask2D;
 phantom.mask1D      = mask2D(:)==1;
 
+end
+
+%% interpolation function for measured cmaps
+function cmaps_out = interp_cmaps_NIST(cmaps, m, M)
+    [Ncoils, n, ~] = size(cmaps);
+    x        = linspace(-0.5, 0.5, n);
+    xq       = linspace(-0.5, 0.5, m);
+    [X, Y]   = ndgrid(x, x);
+    [Xq, Yq] = ndgrid(xq, xq);
+    
+    cmaps_interp = complex(zeros(Ncoils, m, m));
+    for c = 1:Ncoils
+        Sc = squeeze(cmaps(c,:,:));
+        Fr = griddedInterpolant(X,Y,real(Sc), 'linear', 'nearest');
+        Fi = griddedInterpolant(X,Y,imag(Sc), 'linear', 'nearest');
+        cmaps_interp(c,:,:) = complex(Fr(Xq,Yq), Fi(Xq,Yq));
+    end
+
+    start     = floor((M - m)/2) + 1;
+    stop      = start + m - 1;
+    cmaps_out = zeros(Ncoils, M, M);
+    cmaps_out(:, start:stop, start:stop) = cmaps_interp;
 end
