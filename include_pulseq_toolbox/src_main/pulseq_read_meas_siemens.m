@@ -32,6 +32,9 @@ if isempty(flagRemoveOS)
     flagRemoveOS = 0;
 end
 
+%% check for file existence and emit clear exception upon missing file
+checkexists(study);
+
 %% Read Siemens meas file from VB/VD MRI raw data
 if flagRemoveOS==0
     twix_obj = mapVBVD(study, 'ignoreSeg');
