@@ -39,7 +39,7 @@ end
 
 % zero interpolation filling
 zero_params.onoff  = 1;
-zero_params.radius = 0.5;
+zero_params.radius = 6.0;
 zero_params.factor = 2.0;
 Images = mg_zero_filling(Images, zero_params);
 

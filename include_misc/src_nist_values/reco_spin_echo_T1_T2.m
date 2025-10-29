@@ -145,7 +145,7 @@ clear j Images_coils_T1 Images_coils_T2 cmaps_T1 cmaps_T2;
 
 % zero interpolation filling
 zero_params.onoff  = 1;
-zero_params.radius = 0.5;
+zero_params.radius = 6.0;
 zero_params.factor = 2.0;
 Images_T1 = mg_zero_filling(Images_T1, zero_params);
 Images_T2 = mg_zero_filling(Images_T2, zero_params);
