@@ -32,9 +32,6 @@ SPI.rf(temp_loop).phaseOffset = mod(temp_phase,        2*pi);
 SPI.adc.phaseOffset           = mod(temp_phase + pi/2, 2*pi); % shift with pi/2: Mx -> real axis
 clear temp_phase;
 
-%% segment label extension for GE scanners
-
-
 %% LIN label extension for United Imaging scanners
 if flag_UI==1
     if loop_NR>0
@@ -47,26 +44,15 @@ if flag_UI==1
 end
 
 %% add sequence blocks
-
-if flag_GE==1
-    seq.addBlock(mr.makeLabel('SET', 'TRID', 2));
-end
-
+[seq, TRID] = GE_add_TRID(seq, TRID, 'spiral_slice_excitation', flag_GE);
 seq.addBlock(SPI.rf(temp_loop), SPI.gz);
 seq.addBlock(SPI.gz_reph(loop_kz));
 seq.addBlock(SPI.TE_delay(temp_loop));
-
-if flag_GE==1
-    if loop_NR<1
-        seq.addBlock(mr.makeLabel('SET', 'TRID', 3));
-    else
-        seq.addBlock(mr.makeLabel('SET', 'TRID', 4));
-    end
-end
-
 if loop_NR<1
+    [seq, TRID] = GE_add_TRID(seq, TRID, 'spiral_dummy', flag_GE);
     seq.addBlock(SPI.gx(SPI.phi_id(temp_loop)), SPI.gy(SPI.phi_id(temp_loop)), SPI.gz_spoil(loop_kz));           % dummy loop 
 else
+    [seq, TRID] = GE_add_TRID(seq, TRID, 'spiral_readout', flag_GE);
     seq.addBlock(SPI.gx(SPI.phi_id(temp_loop)), SPI.gy(SPI.phi_id(temp_loop)), SPI.gz_spoil(loop_kz), SPI.adc);  % adc loop
 end
 seq.addBlock(SPI.TR_delay(temp_loop));

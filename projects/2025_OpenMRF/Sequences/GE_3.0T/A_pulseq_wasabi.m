@@ -104,7 +104,7 @@ for loop_NR = 1-ndummy:SPI.NR
     ndummy = 0;
 
     % saturation, recovery, fat
-    seq.addBlock(mr.makeLabel('SET', 'TRID', 5)); % TRID label    
+    [seq, TRID] = GE_add_TRID(seq, TRID, 'wasabi_preparations', flag_GE);    
     SAT_add(); % saturation    
     seq.addBlock(mr.makeDelay(SPI.Trec)); % recovery time    
     FAT_add(); % fat saturation

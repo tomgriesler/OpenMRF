@@ -99,10 +99,6 @@ SL.rfc_time = 1.0 *1e-3;         % [s] refocusing time
 
 SL = SL_init(SL, FOV, system);
 
-% store spin-lock amplitude to .seq name
-fSL = 300;
-seq_name = [seq_name '_' num2str(fSL) 'Hz'];
-
 %% fat saturation and reset
 FAT.mode = 'on';
 FAT = FAT_init(FAT, FOV, system);
@@ -115,13 +111,13 @@ for loop_SL = 1 : SL.nSL
 for loop_NR = 1-SPI.Ndummy : SPI.NR
 
     % saturtion, recovery, fat
-    seq.addBlock(mr.makeLabel('SET', 'TRID', 5)); % TRID label
+    [seq, TRID] = GE_add_TRID(seq, TRID, 'saturation_fat_suppression', flag_GE);
     SAT_add(); % saturation
     seq.addBlock(mr.makeDelay(SPI.Trec)); % recovery time
     FAT_add(); % fat saturation
 
     % sl preparation
-    seq.addBlock(mr.makeLabel('SET', 'TRID', 5+loop_SL)); % TRID label
+	[seq, TRID] = GE_add_TRID(seq, TRID, ['spin_lock_' num2str(loop_SL)], flag_GE);
     SL_add();
 
     % spiral imaging

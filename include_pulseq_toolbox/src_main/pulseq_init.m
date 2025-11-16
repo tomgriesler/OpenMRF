@@ -33,6 +33,7 @@ end
 if strcmp(pulseq_scanner(1:2), 'GE')
     flag_GE = 1;
 end
+TRID = [];
 
 % activate United Imaging LIN labels
 if strcmp(pulseq_scanner(1:6), 'United')

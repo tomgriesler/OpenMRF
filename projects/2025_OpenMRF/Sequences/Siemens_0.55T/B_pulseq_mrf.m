@@ -92,9 +92,7 @@ SPI_add_prescans();
 %% create sequence
 
 % inversion
-if flag_GE==1
-	seq.addBlock(mr.makeDelay(system.gradRasterTime), mr.makeLabel('SET', 'TRID', 5));
-end
+[seq, TRID] = GE_add_TRID(seq, TRID, 'inversion', flag_GE);
 INV_add();
 
 % spiral imaging

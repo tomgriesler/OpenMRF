@@ -15,9 +15,10 @@ function [seq, external_path] = GE_adj_receive_gain(system, NR, Trec, adc, alpha
     Trec = mr.makeDelay(round(Trec/system.blockDurationRaster)*system.blockDurationRaster);
 
     % built sequence for pre-scans
-    seq = mr.Sequence(system);
+    seq  = mr.Sequence(system);
+    TRID = [];
     for loop_rep = 1 : NR
-        seq.addBlock(mr.makeLabel('SET', 'TRID', 1));
+		[seq, TRID] = GE_add_TRID(seq, TRID, 'adj_receive', 1); 
         seq.addBlock(rf, gz);
         seq.addBlock(gz_reph);
         seq.addBlock(adc);

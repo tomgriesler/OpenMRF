@@ -26,8 +26,8 @@ pulseq_init();
 %% import SPI object for trajectory measurement
 
 % load any backup file containing an SPI object
-% load('Q:/data/Pulseq/Pulseq_Workspace/mgram/251116/251116_0114/backup_251116_0114_workspace.mat')
-load('Q:/data/Pulseq/Pulseq_Workspace/mgram/251116/251116_0115/backup_251116_0115_workspace.mat')
+% load('Q:/data/Pulseq/Pulseq_Workspace/mgram/251116/251116_0308/backup_251116_0308_workspace.mat')
+load('Q:/data/Pulseq/Pulseq_Workspace/mgram/251116/251116_0309/backup_251116_0309_workspace.mat')
 
 %% store the original workspace inside the new workspace
 PULSEQ_SPI = PULSEQ;
@@ -73,16 +73,16 @@ if strcmp(TRAJ.method, 'robison')
             for loop_av = 1 - ndummy : TRAJ.Nav
 
                 loop_traj = loop_xy;
-                GE_TRAJ_add();
+                TRAJ_add();
 
                 loop_traj = loop_xy + 2;
-                GE_TRAJ_add();
+                TRAJ_add();
 
                 loop_traj = loop_xy + 1;
-                GE_TRAJ_add();
+                TRAJ_add();
 
                 loop_traj = loop_xy + 3;
-                GE_TRAJ_add();
+                TRAJ_add();
                 
             end           
             ndummy = 0;

@@ -133,15 +133,33 @@ if flag_UI==1
 end
 
 %% add sequence blocks
+if strcmp(temp_g_slice.channel, 'x')
+    [seq, TRID] = GE_add_TRID(seq, TRID, 'exc_x', flag_GE);
+elseif strcmp(temp_g_slice.channel, 'y')
+    [seq, TRID] = GE_add_TRID(seq, TRID, 'exc_y', flag_GE);
+end
 seq.addBlock(TRAJ.Trec);
 seq.addBlock(temp_rf, temp_g_slice);
 seq.addBlock(temp_g_reph);
 seq.addBlock(TRAJ.d1);
+
 if loop_av > 0
+    if strcmp(temp_g_read.channel, 'x')
+        [seq, TRID] = GE_add_TRID(seq, TRID, 'read_x', flag_GE);
+    elseif strcmp(temp_g_read.channel, 'y')
+        [seq, TRID] = GE_add_TRID(seq, TRID, 'read_y', flag_GE);
+    end
     seq.addBlock(temp_g_read, temp_adc);
 else
+    if strcmp(temp_g_read.channel, 'x')
+        [seq, TRID] = GE_add_TRID(seq, TRID, 'dummy_x', flag_GE);
+    elseif strcmp(temp_g_read.channel, 'y')
+        [seq, TRID] = GE_add_TRID(seq, TRID, 'dummy_y', flag_GE);
+    end
     seq.addBlock(temp_g_read);
 end
+
+[seq, TRID] = GE_add_TRID(seq, TRID, 'spoil_z', flag_GE);
 seq.addBlock(TRAJ.d1);
 seq.addBlock(TRAJ.g_spoil_z);
 
