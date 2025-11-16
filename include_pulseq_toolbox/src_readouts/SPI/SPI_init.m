@@ -165,7 +165,7 @@ end
 % start with 1st golden angle
 SPI.phi = wrapTo2Pi(SPI.phi - SPI.phi(1) + 2*pi/(1+sqrt(5))); 
 
-% built unique phi array and check consitency
+% build unique phi array and check consistency
 SPI.phi_unique = unique([SPI.phi_id, SPI.phi], 'rows');
 SPI.phi_unique(:,1) = [];
 if isfield(SPI, 'Nunique')
