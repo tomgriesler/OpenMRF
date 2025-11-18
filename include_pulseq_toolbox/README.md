@@ -14,6 +14,8 @@ Auxiliary utilities and modules:
 
 	- FOV: fov setup
 
+    - GE: functions for TRID labels and receive gain adjustments
+
 	- PNS: peripheral nerve stimulation
 
 	- WASABI: simultaneous mapping of water shift and B1 (DOI: 10.1002/mrm.26133)

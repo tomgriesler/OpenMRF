@@ -7,7 +7,7 @@ seq_name = 'wasabi';
 % optional flags
 flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
 flag_report = 1; % 0: off,  1: only timings, 2: full report (slow)
-flag_pns    = 0; % 0: off,  1: simulate PNS stimulation
+flag_pns    = 1; % 0: off,  1: simulate PNS stimulation
 flag_sound  = 0; % 0: off,  1: simulate gradient sound
 flag_mrf    = 0; % 0: off,  1: simulate sequence via MRF toolbox
 
@@ -18,7 +18,7 @@ flag_mrf    = 0; % 0: off,  1: simulate sequence via MRF toolbox
 pulseq_scanner = 'GE_Signa_3T_MIITT';
 
 % select pns sim orientation
-% pns_orientation = 'coronal';
+pns_orientation = 'coronal';
 
 % init system, seq object and load pulseq user information
 pulseq_init();
@@ -104,14 +104,22 @@ for loop_NR = 1-ndummy:SPI.NR
     ndummy = 0;
 
     % saturation, recovery, fat
-    seq.addBlock(mr.makeLabel('SET', 'TRID', 2)); % TRID label    
+    [seq, TRID] = GE_add_TRID(seq, TRID, 'wasabi_preparations', flag_GE);    
     SAT_add(); % saturation    
     seq.addBlock(mr.makeDelay(SPI.Trec)); % recovery time    
     FAT_add(); % fat saturation
 
     % WASABI preparation
-    seq.addBlock(mr.makeLabel('SET', 'TRID', 3)); % TRID label 
-    WASABI_add();
+    if (loop_ppm < WASABI.n_ppm + 1)
+        WASABI.rf.freqOffset = WASABI.f_off(loop_ppm);
+        seq.addBlock(WASABI.rf);
+    else
+        WASABI.rf_dummy = WASABI.rf;
+        WASABI.rf_dummy.signal = WASABI.rf_dummy.signal*0 + 1e-6;
+        WASABI.rf_dummy.freqOffset = 0;
+        seq.addBlock(WASABI.rf_dummy);
+    end
+    seq.addBlock(WASABI.gx_crush, WASABI.gy_crush, WASABI.gz_crush);
 
     % spiral readouts
     SPI_add();
@@ -125,3 +133,8 @@ seq.plot('TimeRange',[2 5]*SPI.Trec)
 %% set definitions, check timings/gradients and export/backup files
 filepath = [mfilename('fullpath') '.m'];
 pulseq_exit();
+
+%% export additional .seq file for receive gain adjustment
+if flag_backup>0
+    [seq_adj, external_path_adj] = GE_adj_receive_gain(system, 5, 2.0, SPI.adc, pi/2, FOV.dz, external_path, wip_id);
+end

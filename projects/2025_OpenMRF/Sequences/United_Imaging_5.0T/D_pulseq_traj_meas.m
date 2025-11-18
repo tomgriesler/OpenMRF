@@ -5,20 +5,14 @@ clear
 seq_name = 'traj_';
 
 % optional flags
-flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
+flag_backup = 0; % 0: off,  1: only backup,  2: backup and send .seq
 flag_report = 0; % 0: off,  1: only timings, 2: full report (slow)
 flag_pns    = 0; % 0: off,  1: simulate PNS stimulation
 flag_sound  = 0; % 0: off,  1: simulate gradient sound
 flag_mrf    = 0; % 0: off,  1: simulate sequence via MRF toolbox
 
 % select scanner
-% pulseq_scanner = 'Siemens_FreeMax_0,55T_MIITT';
-% pulseq_scanner = 'Siemens_Sola_1,5T_MIITT';
-% pulseq_scanner = 'Siemens_Vida_3T_MIITT';
-pulseq_scanner = 'GE_Signa_3T_MIITT';
-
-% select pns sim orientation
-% pns_orientation = 'coronal';
+pulseq_scanner = 'United_Imaging_5T';
 
 % init system, seq object and load pulseq user information
 pulseq_init();
@@ -26,8 +20,9 @@ pulseq_init();
 %% import SPI object for trajectory measurement
 
 % load any backup file containing an SPI object
-% load('Q:/data/Pulseq/Pulseq_Workspace/mgram/251116/251116_0308/backup_251116_0308_workspace.mat')
-load('Q:/data/Pulseq/Pulseq_Workspace/mgram/251116/251116_0309/backup_251116_0309_workspace.mat')
+% load('.../backup_YYMMDD_HHMM_workspace.mat')
+% load('Q:/data/Pulseq/Pulseq_Workspace/mgram/251016/251016_1417/backup_251016_1417_workspace.mat')
+load('Q:/data/Pulseq/Pulseq_Workspace/mgram/251016/251016_1420/backup_251016_1420_workspace.mat')
 
 %% store the original workspace inside the new workspace
 PULSEQ_SPI = PULSEQ;
@@ -55,7 +50,6 @@ TRAJ.Trec = 150 *1e-3; % [s]
 % analyze phase evolution in a thin slice far from the iso-center
 TRAJ.slice_thickness = 2 *1e-3;  % [m] slice thickness
 TRAJ.slice_offset    = 50 *1e-3; % [m] slice offset
-TRAJ.lim_slew        = 0.5;
 
 % flip angle
 TRAJ.exc_fa = 20 *pi/180;
@@ -65,25 +59,37 @@ TRAJ.exc_fa = 20 *pi/180;
 
 %% add seq ojects
 
+if strcmp(TRAJ.method, 'duyn')
+    for loop_xy = [1 3]
+        ndummy = TRAJ.Ndummy;
+        for loop_NR = 1 : TRAJ.NR            
+            loop_traj = loop_xy;
+            for loop_av = 1 - ndummy : TRAJ.Nav
+                TRAJ_add();
+            end
+            loop_traj = loop_xy + 1;
+            for loop_av = 1 : TRAJ.Nav
+                TRAJ_add();
+            end
+            ndummy = 0;
+        end
+    end
+end
+
 if strcmp(TRAJ.method, 'robison')
     for loop_xy = [1 5]
         ndummy = TRAJ.Ndummy;
         for loop_NR = 1 : TRAJ.NR            
             loop_traj = loop_xy;
             for loop_av = 1 - ndummy : TRAJ.Nav
-
                 loop_traj = loop_xy;
                 TRAJ_add();
-
                 loop_traj = loop_xy + 2;
                 TRAJ_add();
-
                 loop_traj = loop_xy + 1;
                 TRAJ_add();
-
                 loop_traj = loop_xy + 3;
                 TRAJ_add();
-                
             end           
             ndummy = 0;
         end
@@ -96,8 +102,3 @@ seq.plot('TimeRange', mr.calcDuration(TRAJ.Trec)*([TRAJ.Ndummy*4, TRAJ.Ndummy*4+
 %% set definitions, check timings/gradients and export/backup files
 filepath = [mfilename('fullpath') '.m'];
 pulseq_exit();
-
-%% export additional .seq file for receive gain adjustment
-if flag_backup>0
-    [seq_adj, external_path_adj] = GE_adj_receive_gain(system, 5, 2.0, TRAJ.adc, pi/2, TRAJ.slice_thickness, external_path, wip_id);
-end
