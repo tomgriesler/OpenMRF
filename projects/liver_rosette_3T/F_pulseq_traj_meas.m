@@ -2,7 +2,7 @@
 % basis: SPI readout
 % use for: measurement of gradient trajectories
 clear
-seq_name = 'traj_3_';
+seq_name = 'traj_full_';
 
 % optional flags
 flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
@@ -26,8 +26,9 @@ pulseq_init();
 % load any backup file containing an SPI object
 % load('.../backup_YYMMDD_HHMM_workspace.mat')
 % load('E:\University of Michigan Dropbox\Tom Griesler\pulseq\Pulseq_Workspace\tomgr\251108\251108_0951\backup_251108_0951_workspace.mat');
-load('E:\University of Michigan Dropbox\Tom Griesler\pulseq\Pulseq_Workspace\tomgr\251113\251113_1047\backup_251113_1047_workspace.mat');
-
+% load('E:\University of Michigan Dropbox\Tom Griesler\pulseq\Pulseq_Workspace\tomgr\251113\251113_1047\backup_251113_1047_workspace.mat');
+% load('/home/tomgriesler/Documents/UM/code/OpenMRF/backup/Pulseq_Workspace/tomgr/251116/251116_1711/backup_251116_1711_workspace.mat');
+load('/home/tomgriesler/Documents/UM/code/OpenMRF/backup/Pulseq_Workspace/tomgr/251117/251117_1118/backup_251117_1118_workspace.mat');
 
 %% store the original workspace inside the new workspace
 PULSEQ_SPI = PULSEQ;
@@ -59,6 +60,9 @@ TRAJ.slice_offset    = 50 *1e-3; % [m] slice offset
 % flip angle
 TRAJ.exc_fa = 20 *pi/180;
 
+% reduce stimulation
+TRAJ.lim_slew = 0.5;
+
 % init seq objects for trajectory scans
 [TRAJ, FOV] = TRAJ_init(TRAJ, PULSEQ.PULSEQ_SPI.SPI, system);
 
@@ -85,6 +89,7 @@ if strcmp(TRAJ.method, 'robison')
     for loop_xy = [1 5]
         ndummy = TRAJ.Ndummy;
         for loop_NR = 1 : TRAJ.NR            
+        % for loop_NR = 1:5
             loop_traj = loop_xy;
             for loop_av = 1 - ndummy : TRAJ.Nav
                 loop_traj = loop_xy;

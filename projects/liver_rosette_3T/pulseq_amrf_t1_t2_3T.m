@@ -5,7 +5,7 @@ clear
 seq_name = 'amrf_t1_t2_3T';
 
 % optional flags
-flag_backup = 0; % 0: off,  1: only backup,  2: backup and send .seq
+flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
 flag_report = 0; % 0: off,  1: only timings, 2: full report (slow)
 flag_pns    = 0; % 0: off,  1: simulate PNS stimulation
 flag_sound  = 0; % 0: off,  1: simulate gradient sound

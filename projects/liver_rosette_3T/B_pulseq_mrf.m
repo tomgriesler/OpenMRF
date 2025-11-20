@@ -5,7 +5,7 @@ seq_name = 'mrf_';
 % optional flags
 flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
 flag_report = 0; % 0: off,  1: only timings, 2: full report (slow)
-flag_pns    = 0; % 0: off,  1: simulate PNS stimulation
+flag_pns    = 1; % 0: off,  1: simulate PNS stimulation
 flag_sound  = 0; % 0: off,  1: simulate gradient sound
 flag_mrf    = 0; % 0: off,  1: simulate sequence via MRF toolbox
 
