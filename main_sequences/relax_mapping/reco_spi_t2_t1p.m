@@ -6,7 +6,7 @@
 clear
 
 % reconstruction of spiral datasets
-[Images, PULSEQ] = SPI_reco();
+[Images, PULSEQ, study_info] = SPI_reco();
 
 % fit mask
 Nimages = size(Images,1);
@@ -51,3 +51,9 @@ title('R^2');
 colorbar;
 
 colormap(turbo(1000));
+
+%%
+res.T12p_Map = T12p_Map;
+res.Images = Images;
+res.TE = TE;
+save_study_results(study_info, res);

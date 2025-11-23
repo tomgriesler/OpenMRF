@@ -6,7 +6,7 @@
 clear
 
 % reconstruction of spiral datasets
-[Images, PULSEQ] = SPI_reco();
+[Images, PULSEQ, study_info] = SPI_reco();
 
 % fit mask
 NInv = size(Images,1);
@@ -43,3 +43,9 @@ title('Inversion efficiency')
 colorbar;
 
 colormap(turbo(1000));
+
+%%
+res.T1_Map = T1_Map;
+res.Images = Images;
+res.TI = TI;
+save_study_results(study_info, res);
