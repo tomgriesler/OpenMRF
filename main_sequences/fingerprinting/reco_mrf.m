@@ -260,75 +260,80 @@ if isfield(match.LR, 'db1')
     clear ax1 ax2 ax3;
 end
 
-%% compare to NIST ref values
-[T1_ref, T2_ref] = NIST_references('1.5T', 'MnCl2');
-
-if ~exist('x', 'var')
-    figure();
-    imagesc(match.LR.T1, [0 3]); axis image; axis off; colormap(gca, t1cmp); colorbar;
-    [x, y] = ginput(14);
+%% optional: compare to NIST ref values
+if 0
+    [T1_ref, T2_ref] = NIST_references('1.5T_MnCl2');
+    
+    if ~exist('x', 'var')
+        figure();
+        imagesc(match.LR.T1, [0 3]); axis image; axis off; colormap(gca, t1cmp); colorbar;
+        [x, y] = ginput(14);
+    end
+    
+    r = 4; % radius of ROIs
+    
+    T1_mrf = zeros(14, 2);
+    T2_mrf = zeros(14, 2);
+    for j=1:14
+        [tempx, tempy] = meshgrid(1:size(match.LR.M0,1), 1:size(match.LR.M0,2));
+        roi = ((tempx - x(j)).^2 + (tempy - y(j)).^2) <= r^2;
+        temp_t1 = match.LR.T1(roi);
+        T1_mrf(j,1) = mean(temp_t1);
+        T1_mrf(j,2) = std(temp_t1);
+        temp_t2 = match.LR.T2(roi);
+        T2_mrf(j,1) = mean(temp_t2);
+        T2_mrf(j,2) = std(temp_t2);
+        clear tempx tempy temp_t1 temp_t2;
+    end
+    
+    figure()
+    subplot(2,2,1)
+    loglog(T1_ref, T1_mrf(:,1), '.', 'MarkerSize', 20)
+    hold on
+    temp_lim = [min([T1_ref; T1_mrf(:,1)])*0.9, max([T1_ref; T1_mrf(:,1)])*1.1];
+    loglog(temp_lim, temp_lim, 'k--', 'LineWidth', 2)
+    xlabel('T1 ref [s]')
+    ylabel('T1 mrf [s]')
+    xlim(temp_lim)
+    ylim(temp_lim)
+    set(gca, 'Fontsize', 12)
+    axis square;
+    
+    subplot(2,2,2)
+    loglog(T2_ref, T2_mrf(:,1), '.', 'MarkerSize', 20)
+    hold on
+    temp_lim = [min([T2_ref; T2_mrf(:,1)])*0.9, max([T2_ref; T2_mrf(:,1)])*1.1];
+    loglog(temp_lim, temp_lim, 'k--', 'LineWidth', 2)
+    xlabel('T2 ref [s]')
+    ylabel('T2 mrf [s]')
+    xlim(temp_lim)
+    ylim(temp_lim)
+    set(gca, 'Fontsize', 12)
+    axis square;
+    clear temp_lim;
+    
+    subplot(2,2,3)
+    hold on
+    plot(T1_ref, (T1_mrf(:,1)-T1_ref)./T1_ref*100, '.', 'MarkerSize', 20)
+    yline(0, 'k--', 'LineWidth', 2)
+    ylim([-20 20])
+    xlabel('T1 ref')
+    ylabel('T1 deviation [%]')
+    set(gca, 'Fontsize', 12)
+    axis square;
+    
+    subplot(2,2,4)
+    hold on
+    plot(T1_ref, (T2_mrf(:,1)-T2_ref)./T2_ref*100, '.', 'MarkerSize', 20)
+    yline(0, 'k--', 'LineWidth', 2)
+    ylim([-20 20])
+    xlabel('T1 ref')
+    ylabel('T2 deviation [%]')
+    set(gca, 'Fontsize', 12)
+    axis square;
 end
 
-r = 4; % radius of ROIs
-
-T1_mrf = zeros(14, 2);
-T2_mrf = zeros(14, 2);
-for j=1:14
-    [tempx, tempy] = meshgrid(1:size(match.LR.M0,1), 1:size(match.LR.M0,2));
-    roi = ((tempx - x(j)).^2 + (tempy - y(j)).^2) <= r^2;
-    temp_t1 = match.LR.T1(roi);
-    T1_mrf(j,1) = mean(temp_t1);
-    T1_mrf(j,2) = std(temp_t1);
-    temp_t2 = match.LR.T2(roi);
-    T2_mrf(j,1) = mean(temp_t2);
-    T2_mrf(j,2) = std(temp_t2);
-    clear tempx tempy temp_t1 temp_t2;
-end
-
-figure()
-subplot(2,2,1)
-loglog(T1_ref, T1_mrf(:,1), '.', 'MarkerSize', 20)
-hold on
-temp_lim = [min([T1_ref; T1_mrf(:,1)])*0.9, max([T1_ref; T1_mrf(:,1)])*1.1];
-loglog(temp_lim, temp_lim, 'k--', 'LineWidth', 2)
-xlabel('T1 ref [s]')
-ylabel('T1 mrf [s]')
-xlim(temp_lim)
-ylim(temp_lim)
-set(gca, 'Fontsize', 12)
-axis square;
-
-subplot(2,2,2)
-loglog(T2_ref, T2_mrf(:,1), '.', 'MarkerSize', 20)
-hold on
-temp_lim = [min([T2_ref; T2_mrf(:,1)])*0.9, max([T2_ref; T2_mrf(:,1)])*1.1];
-loglog(temp_lim, temp_lim, 'k--', 'LineWidth', 2)
-xlabel('T2 ref [s]')
-ylabel('T2 mrf [s]')
-xlim(temp_lim)
-ylim(temp_lim)
-set(gca, 'Fontsize', 12)
-axis square;
-clear temp_lim;
-
-subplot(2,2,3)
-hold on
-plot(T1_ref, (T1_mrf(:,1)-T1_ref)./T1_ref*100, '.', 'MarkerSize', 20)
-yline(0, 'k--', 'LineWidth', 2)
-ylim([-20 20])
-xlabel('T1 ref')
-ylabel('T1 deviation [%]')
-set(gca, 'Fontsize', 12)
-axis square;
-
-subplot(2,2,4)
-hold on
-plot(T1_ref, (T2_mrf(:,1)-T2_ref)./T2_ref*100, '.', 'MarkerSize', 20)
-yline(0, 'k--', 'LineWidth', 2)
-ylim([-20 20])
-xlabel('T1 ref')
-ylabel('T2 deviation [%]')
-set(gca, 'Fontsize', 12)
-axis square;
-
-
+%% save results
+res.images = images;
+res.match = match;
+save_study_results(study_info, res);
