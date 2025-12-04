@@ -6,7 +6,7 @@
 clear
 
 % reconstruction of spiral datasets
-[Images, PULSEQ] = SPI_reco();
+[Images, PULSEQ, study_info] = SPI_reco();
 
 % fit mask
 NInv = size(Images,1);
@@ -20,11 +20,32 @@ Images = real(Images .* exp(-1i*repmat(angle(Images(end,:,:)),[NInv,1,1])));
 TI = PULSEQ.INV.inv_rec_time;
 [T1_Map, M0_Map, Eff_Map, R2_Map] = mg_map_T1(real(Images), TI, mask);
 
-% vis results
-figure()
-subplot(1,3,1)
-imagesc(T1_Map, [0 2]); axis equal; axis off; colormap(turbo(1000));
-subplot(1,3,2)
-imagesc(R2_Map, [0.8 1]); axis equal; axis off; colormap(turbo(1000));
-subplot(1,3,3)
-imagesc(Eff_Map, [0.5, 1]); axis equal; axis off; colormap(turbo(1000));
+%% vis results
+figure;
+tiledlayout(1, 3)
+
+nexttile;
+imagesc(T1_Map, [0 2]); 
+axis image; axis off; 
+title('T1 [s]');
+colorbar;
+
+nexttile;
+imagesc(R2_Map, [0.8 1]); 
+axis image; axis off; 
+title('R^2')
+colorbar;
+
+nexttile;
+imagesc(Eff_Map, [0.5, 1]); 
+axis image; axis off; 
+title('Inversion efficiency')
+colorbar;
+
+colormap(turbo(1000));
+
+%%
+res.T1_Map = T1_Map;
+res.Images = Images;
+res.TI = TI;
+save_study_results(study_info, res);

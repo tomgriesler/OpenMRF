@@ -1,21 +1,18 @@
-%% init pulseq
-% basis: SPI readout
-% use for: T1rho, T2rho or T2 mapping
+%% init
+% basis: spiral readout
+% use for: B0 and B1 mapping via WASABI method -> doi.org/10.1002/mrm.26133
 clear
-seq_name = 't1p_mapping';
+seq_name = 'wasabi';
 
 % optional flags
-flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
+flag_backup = 0; % 0: off,  1: only backup,  2: backup and send .seq
 flag_report = 1; % 0: off,  1: only timings, 2: full report (slow)
 flag_pns    = 1; % 0: off,  1: simulate PNS stimulation
 flag_sound  = 0; % 0: off,  1: simulate gradient sound
 flag_mrf    = 0; % 0: off,  1: simulate sequence via MRF toolbox
 
 % select scanner
-% pulseq_scanner = 'Siemens_FreeMax_0,55T_MIITT';
-% pulseq_scanner = 'Siemens_Sola_1,5T_MIITT';
-% pulseq_scanner = 'Siemens_Vida_3T_MIITT';
-pulseq_scanner = 'GE_Signa_3T_MIITT';
+pulseq_scanner = 'United_Imaging_5T';
 
 % select pns sim orientation
 pns_orientation = 'coronal';
@@ -23,15 +20,11 @@ pns_orientation = 'coronal';
 % init system, seq object and load pulseq user information
 pulseq_init();
 
-% store spin-lock amplitude to .seq name
-fSL = 300;
-seq_name = [seq_name '_' num2str(fSL) 'Hz'];
-
 %% FOV geometry
-FOV.Nxy      = 192;         % [ ] matrix size
+FOV.Nxy      = 128;         % [ ] matrix size
 FOV.Nz       = 1;           % [ ] numer of "stack-of-spirals", 1 -> 2D
 FOV.fov_xy   = 300  *1e-3;  % [m] FOV geometry
-FOV.dz       = 8   *1e-3;   % [m] slab or slice thickness
+FOV.dz       = 8  *1e-3;    % [m] slab or slice thickness
 FOV.z_offset = 0    *1e-3;  % [m] slice offset
 FOV.fov_z    = FOV.dz;
 FOV_init();
@@ -45,16 +38,16 @@ SPI.Ndummy = 0;             % [ ] initial dummy loops
 
 % slice excitation
 SPI.exc_mode       = 'sinc';        % 'sinc' or 'sigpy_SLR'
+SPI.exc_shape      = 'ex';          % only for sigpy: 'st' or 'ex' 
 SPI.exc_time       = 2.0 *1e-3;     % [s] excitation time
 SPI.exc_tbw        = 4;             % [ ] time bandwidth product
 SPI.exc_fa_mode    = 'equal';       % 'equal',  'ramped',  'import'  
 SPI.exc_flipangle  = 90 *pi/180;    % [rad] const FA or start of FA ramp -> set [] for auto mode
-SPI.lim_gz_slew    = 0.8;           % [ ] reduce stimulation during slice excitation
-SPI.lim_reph_slew  = 0.6;           % [ ] reduce stimulation during slice rephaser
+SPI.lim_reph_slew  = 0.5;           % [ ] reduce stimulation during slice rephaser
 
 % gradient spoiling
 SPI.spoil_nTwist   = 8;          % [ ] number of 2pi twists in z-direction, 0 for balanced
-SPI.spoil_duration = 3.5 *1e-3;  % [s] time for spoiler and rewinder gradients
+SPI.spoil_duration = 4.0 *1e-3;  % [s] time for spoiler and rewinder gradients
 SPI.lim_spoil_slew = 0.5;        % [ ] reduce stimulation during gradient spoiling
 
 % rf spoiling
@@ -69,71 +62,65 @@ SPI.kmax                = SPI.deltak * FOV.Nxy/2;
 
 % spiral geometry: vds-hargreaves-toolbox
 SPI.geo.Nvds     = 7.9;           % number of vds-spirals for sampling the kspce center
-SPI.geo.BW       = 400 *1e3;      % [Hz] bandwidth of spiral acquisition
+SPI.geo.BW       = 500 *1e3;      % [Hz] bandwidth of spiral acquisition
 SPI.geo.Fcoeff   = [1  0];        % [1 0] for archimedean (equal density), [1 -0.99] for logarithmic (variable density)
 SPI.geo.grad_lim = 1/sqrt(3);     % limit of gradient field strength
 SPI.geo.slew_lim = 1/sqrt(3);     % limit of slew rate
 SPI.geo.kmax     = SPI.kmax;      % determines resolution
 SPI.geo.t_dwell  = 1/SPI.geo.BW;  % [s] dwell time for spiral acquisition
 
-[SPI, ktraj_adc, ktraj_full, ktraj_reco] = SPI_init(SPI, FOV, system);
-
-SPI.Trec = 5;
-
-%% params: Spin-Lock
-
-% spin-lock pulses
-SL.relax_type = {'T1p'};                  % T1p or T2p or T2
-SL.seq_type   = {'BSL'};                  % BSL or CSL or RESL
-SL.tSL        = [8 : 8 : 80] *1e-3;       % [s]  SL time
-SL.fSL        = fSL * ones(size(SL.tSL)); % [Hz] SL amplitude
-
-% excitation pulses
-SL.exc_mode  = 'adiabatic_AHP';  % 'adiabatic_AHP', 'sinc', 'sigpy_SLR' or 'bp'
-SL.exc_time  = 3.0 *1e-3;        % [s] excitation time
-SL.adia_wmax = 600 * 2*pi;       % [rad/s] amplitude of adiabatic pulse
-
-% refocusing pulses
-SL.rfc_mode = 'bp';              % 'bp', 'sinc', 'sigpy_SLR' or 'comp'
-SL.rfc_time = 1.0 *1e-3;         % [s] refocusing time
-
-SL = SL_init(SL, FOV, system);
+[SPI, ktraj_adc, ktraj_full, ktraj_reco] = SPI_init(SPI, FOV, system, 0);
+SPI.Trec = 1;
 
 %% fat saturation and reset
-FAT.mode = 'on';
+FAT.mode = 'off';
 FAT = FAT_init(FAT, FOV, system);
 
 SAT.mode = 'on';
 SAT = SAT_init(SAT, FOV, system);
 
-%% create sequence
-for loop_SL = 1 : SL.nSL    
-for loop_NR = 1-SPI.Ndummy : SPI.NR
+%% WASABI preparation
+WASABI.f0       = 127732435;     % [Hz]  larmor frequency for 3T
+WASABI.ppm      = -2 : 0.1 : 2;  % [ppm] wasabi pulse offresonances
+WASABI.f1       = 150;           % [Hz]  wasabi pulse amplitude
+WASABI.tau      = 5 *1e-3;       % [s]   pulse duration (5ms)
+WASABI.phase    = 0;             % [rad] pulse phase
+WASABI.B0       = WASABI.f0 / system.gamma; % [T]
+WASABI.B1       = WASABI.f1 / system.gamma; % [T]
+WASABI.n_ppm    = numel(WASABI.ppm);        % [ ]
+WASABI.f_off    = WASABI.ppm *1e-6 *WASABI.B0 *system.gamma; % [Hz] wasabi pulse offresonace frequencies
+WASABI.tau      = round(WASABI.tau/system.rfRasterTime) * system.rfRasterTime; % prevent timing errors
+WASABI          = WASABI_init(WASABI, FOV, system);
 
-    % saturtion, recovery, fat
-    [seq, TRID] = GE_add_TRID(seq, TRID, 'saturation_fat_suppression', flag_GE);
-    SAT_add(); % saturation
-    seq.addBlock(mr.makeDelay(SPI.Trec)); % recovery time
-    FAT_add(); % fat saturation
+%% add sequence loops
 
-    % sl preparation
-	[seq, TRID] = GE_add_TRID(seq, TRID, ['spin_lock_' num2str(loop_SL)], flag_GE);
-    SL_add();
+ndummy = 1;
+for loop_ppm = 1 : WASABI.n_ppm + 1
+for loop_NR = 1-ndummy:SPI.NR
 
-    % spiral imaging
-    SPI_add();  
+    ndummy = 0;
+
+    % saturation
+    SAT_add();
+
+    % recovery time
+    seq.addBlock(mr.makeDelay(SPI.Trec));
+
+    % fat saturation
+    FAT_add();
+
+    % WASABI preparation
+    WASABI_add();
+
+    % spiral readouts
+    SPI_add();
 
 end    
 end
 
 %% plot sequence diagram
-seq.plot()
+seq.plot('TimeRange',[2 5]*SPI.Trec)
 
 %% set definitions, check timings/gradients and export/backup files
 filepath = [mfilename('fullpath') '.m'];
 pulseq_exit();
-
-%% export additional .seq file for receive gain adjustment
-if flag_backup>0
-    [seq_adj, external_path_adj] = GE_adj_receive_gain(system, 5, 2.0, SPI.adc, pi/2, FOV.dz, external_path, wip_id);
-end

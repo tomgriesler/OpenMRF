@@ -1,19 +1,16 @@
 %% init pulseq
 clear
-seq_name = 'cmrf_t1_t2_t1p';
+seq_name = 'CMRF';
 
 % optional flags
-flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
+flag_backup = 0; % 0: off,  1: only backup,  2: backup and send .seq
 flag_report = 1; % 0: off,  1: only timings, 2: full report (slow)
 flag_pns    = 1; % 0: off,  1: simulate PNS stimulation
 flag_sound  = 0; % 0: off,  1: simulate gradient sound
 flag_mrf    = 0; % 0: off,  1: simulate sequence via MRF toolbox
 
 % select scanner
-% pulseq_scanner = 'Siemens_FreeMax_0,55T_MIITT';
-% pulseq_scanner = 'Siemens_Sola_1,5T_MIITT';
-% pulseq_scanner = 'Siemens_Vida_3T_MIITT';
-pulseq_scanner = 'GE_Signa_3T_MIITT';
+pulseq_scanner = 'United_Imaging_5T';
 
 % select pns sim orientation
 pns_orientation = 'coronal';
@@ -21,9 +18,9 @@ pns_orientation = 'coronal';
 % init system, seq object and load pulseq user information
 pulseq_init();
 
-% store spin-lock amplitude to .seq name
-fSL = 300;
-seq_name = [seq_name '_' num2str(fSL) 'Hz'];
+% maximum RF [Hz]
+f1_max   = 700;
+seq_name = [seq_name '_' num2str(f1_max) 'Hz'];
 
 %% FOV geometry
 FOV.Nxy      = 192;         % [ ] matrix size
@@ -45,23 +42,42 @@ FOV_init();
 % 'ADIASL'     ->  use for adiabatic T1p encoding
 % 'MLEV'       ->  use for T2 or T2p encoding
 
+% MRF.enc_list = {
+% 'Inversion';
+% 'No_Prep';
+% 'T2';
+% 'T2';
+% 'Inversion';
+% 'No_Prep';
+% 'T2';
+% 'T2';
+% 'Inversion';
+% 'No_Prep';
+% 'T2';
+% 'T2';
+% 'Inversion';
+% 'No_Prep';
+% 'T2';
+% 'T2'
+% };
+
 MRF.enc_list = {
 'Inversion';
 'No_Prep';
-'T2';
-'T2';
+'MLEV';
+'MLEV';
 'Inversion';
 'No_Prep';
-'SL';
-'SL';
+'MLEV';
+'MLEV';
 'Inversion';
 'No_Prep';
-'T2';
-'T2';
+'MLEV';
+'MLEV';
 'Inversion';
 'No_Prep';
-'SL';
-'SL'
+'MLEV';
+'MLEV'
 };
 
 MRF.n_segm = numel(MRF.enc_list);
@@ -120,41 +136,37 @@ MRF.TRs = SPI.TR;
 
 %% params: Inversion
 INV.rf_type      = 'HYPSEC_inversion';
-INV.tExc         = 10 *1e-3;  % [s]  hypsech pulse duration
-INV.beta         = 700;       % [Hz] maximum rf peak amplitude
-INV.mu           = 4.9;       % [ ]  determines amplitude of frequency sweep
+INV.tExc         = 8.0 *1e-3;  % [s]  hypsech pulse duration
+INV.beta         = f1_max;     % [Hz] maximum rf peak amplitude
+INV.mu           = 4.9;        % [ ]  determines amplitude of frequency sweep
 INV.inv_rec_time = [0.01 35 380 130] *1e-3;
 INV = INV_init(INV, FOV, system);
 
-%% params: T2 preparation
-T2.exc_mode   = 'adiabatic_BIR4';
-T2.rfc_dur    = 2 *1e-3;   % [s]  duration of composite refocusing pulses
-T2.bir4_tau   = 10 *1e-3;  % [s]  bir4 pulse duration
-T2.bir4_f1    = 640;       % [Hz] maximum rf peak amplitude
-T2.bir4_beta  = 10;        % [ ]  am waveform parameter
-T2.bir4_kappa = atan(10);  % [ ]  fm waveform parameter
-T2.bir4_dw0   = 30000;     % [rad/s] fm waveform scaling
-T2.prep_times = [40 80 40 80] * 1e-3;  % [s] inversion times
-T2            = T2_init(T2, FOV, system);
+%% params: MLEV T2p preparation
+MLEV.n_mlev     = [1 2 1 2 1 2 1 2]; % number of MLEV4 preps
+MLEV.t_inter    = 10 *1e-3;          % [s]  inter pulse delay for T2 preparation
 
-%% params: Spin-Lock
+MLEV.exc_mode   = 'adiabatic_BIR4';  % 'adiabatic_BIR4' or 'adiabatic_AHP'
+MLEV.fSL        = f1_max;            % [Hz] eff spin-lock field strength
+MLEV.bir4_tau   = 8.0 *1e-3;         % [s]  bir4 pulse duration
+MLEV.bir4_f1    = f1_max;            % [Hz] maximum rf peak amplitude
+MLEV.bir4_beta  = 10;                % [ ]  am waveform parameter
+MLEV.bir4_kappa = atan(10);          % [ ]  fm waveform parameter
+MLEV.bir4_dw0   = 30000;             % [rad/s] fm waveform scaling
+MLEV.bir4_dphi  = 0.175+0.0648;
+if sum(contains(MRF.enc_list, 'MLEV'))>0
+    seq_name = [seq_name '_bir4'];
+end
 
-% spin-lock pulses
-SL.relax_type = {'T1p'};                  % T1p or T2p or T2
-SL.seq_type   = {'BSL'};                  % BSL or CSL or RESL
-SL.tSL        = [40 80 40 80] *1e-3;      % [s]  SL time
-SL.fSL        = fSL * ones(size(SL.tSL)); % [Hz] SL amplitude
+% MLEV.exc_mode     = 'adiabatic_AHP';   % 'adiabatic_BIR4' or 'adiabatic_AHP'
+% MLEV.fSL          = f1_max;            % [Hz] eff spin-lock field strength
+% MLEV.ahp_exc_time = 4.0 *1e-3;
+% MLEV.ahp_wmax = f1_max * 2*pi;
+% if sum(contains(MRF.enc_list, 'MLEV'))>0
+%     seq_name = [seq_name '_ahp'];
+% end
 
-% excitation pulses
-SL.exc_mode  = 'adiabatic_AHP';  % 'adiabatic_AHP', 'sinc', 'sigpy_SLR' or 'bp'
-SL.exc_time  = 3.0 *1e-3;        % [s] excitation time
-SL.adia_wmax = 600 * 2*pi;       % [rad/s] amplitude of adiabatic pulse
-
-% refocusing pulses
-SL.rfc_mode = 'bp';              % 'bp', 'sinc', 'sigpy_SLR' or 'comp'
-SL.rfc_time = 1.0 *1e-3;         % [s] refocusing time
-
-SL = SL_init(SL, FOV, system);
+MLEV = MLEV_init(MLEV, FOV, system);
 
 %% params: Fat Saturation
 FAT.mode = 'on';
@@ -170,7 +182,7 @@ MRF_adjust_segment_delays();
 % on:  Cardiac
 % off: Abdominal or Phantom
 
-MRF.mode_trig = 'off';
+MRF.mode_trig = 'on';
 
 % calc fixed segment timings
 MRF.acq_duration      = sum(SPI.TR(1:MRF.nr));
@@ -197,8 +209,3 @@ seq.plot();
 %% set definitions, check timings/gradients and export/backup files
 filepath = [mfilename('fullpath') '.m'];
 pulseq_exit();
-
-%% export additional .seq file for receive gain adjustment
-if flag_backup>0
-    [seq_adj, external_path_adj] = GE_adj_receive_gain(system, 5, 2.0, SPI.adc, pi/2, FOV.dz, external_path, wip_id);
-end

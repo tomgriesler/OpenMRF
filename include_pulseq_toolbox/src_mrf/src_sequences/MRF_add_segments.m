@@ -14,9 +14,7 @@ loop_rf_inc = 0;
 for loop_MRF = 1 : MRF.n_segm
 
 	% Segment label for GE scanners
-	if flag_GE==1
-		seq.addBlock(mr.makeLabel('SET', 'TRID', loop_MRF+1));
-	end
+    [seq, TRID] = GE_add_TRID(seq, TRID, ['CMRF_' num2str(loop_MRF) '_' MRF.enc_list{loop_MRF}], flag_GE);
  
     % Trigger: R-Wave
     if exist('TRIG_IN', 'var')
