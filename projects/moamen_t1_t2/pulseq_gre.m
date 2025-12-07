@@ -4,23 +4,24 @@ clear
 seq_name = 'gre';
 
 % optional flags
-flag_backup = 0; % 0: off,  1: only backup,  2: backup and send .seq
+flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
 flag_report = 0; % 0: off,  1: only timings, 2: full report (slow)
-flag_pns    = 0; % 0: off,  1: simulate PNS stimulation
+flag_pns    = 1; % 0: off,  1: simulate PNS stimulation
 flag_sound  = 0; % 0: off,  1: simulate gradient sound
-flag_mrf    = 1; % 0: off,  1: simulate sequence via MRF toolbox
+flag_mrf    = 0; % 0: off,  1: simulate sequence via MRF toolbox
 
 pulseq_scanner = 'Siemens_Prisma_3T_Technion';
+pns_orientation = 'coronal';
 
 % init system, seq object and load pulseq user information
 pulseq_init();
 
 %% FOV geometry
-FOV.Nx       = 256;
-FOV.Ny       = 256;
-FOV.fov_x    = 150 *1e-3;
-FOV.fov_y    = 150 *1e-3;
-FOV.dz       = 2 *1e-3;
+FOV.Nx       = 96;
+FOV.Ny       = 96;
+FOV.fov_x    = 96 *1e-3;
+FOV.fov_y    = 96 *1e-3;
+FOV.dz       = 5 *1e-3;
 FOV.z_offset = 0 *1e-3;
 FOV_init();
 

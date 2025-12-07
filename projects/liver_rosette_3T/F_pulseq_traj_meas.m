@@ -5,7 +5,7 @@ clear
 seq_name = 'traj_full_';
 
 % optional flags
-flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
+flag_backup = 0; % 0: off,  1: only backup,  2: backup and send .seq
 flag_report = 0; % 0: off,  1: only timings, 2: full report (slow)
 flag_pns    = 0; % 0: off,  1: simulate PNS stimulation
 flag_sound  = 0; % 0: off,  1: simulate gradient sound
@@ -28,7 +28,7 @@ pulseq_init();
 % load('E:\University of Michigan Dropbox\Tom Griesler\pulseq\Pulseq_Workspace\tomgr\251108\251108_0951\backup_251108_0951_workspace.mat');
 % load('E:\University of Michigan Dropbox\Tom Griesler\pulseq\Pulseq_Workspace\tomgr\251113\251113_1047\backup_251113_1047_workspace.mat');
 % load('/home/tomgriesler/Documents/UM/code/OpenMRF/backup/Pulseq_Workspace/tomgr/251116/251116_1711/backup_251116_1711_workspace.mat');
-load('/home/tomgriesler/Documents/UM/code/OpenMRF/backup/Pulseq_Workspace/tomgr/251117/251117_1118/backup_251117_1118_workspace.mat');
+load('/home/tomgriesler/Documents/UM/pulseq/Pulseq_Workspace/tomgr/251117/251117_1118/backup_251117_1118_workspace.mat');
 
 %% store the original workspace inside the new workspace
 PULSEQ_SPI = PULSEQ;
