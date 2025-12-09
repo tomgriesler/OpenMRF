@@ -2,10 +2,10 @@
 % basis: spiral readout
 % use for: B0 and B1 mapping via WASABI method -> doi.org/10.1002/mrm.26133
 clear
-seq_name = 'spi_wasabi';
+seq_name = 'spi_wasabi_5mm';
 
 % optional flags
-flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
+flag_backup = 0; % 0: off,  1: only backup,  2: backup and send .seq
 flag_report = 0; % 0: off,  1: only timings, 2: full report (slow)
 flag_pns    = 1; % 0: off,  1: simulate PNS stimulation
 flag_sound  = 0; % 0: off,  1: simulate gradient sound

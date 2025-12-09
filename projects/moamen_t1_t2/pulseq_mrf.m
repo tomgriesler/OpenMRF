@@ -1,9 +1,9 @@
 %% init pulseq
 clear
-seq_name = 'mrf_3mm_';
+seq_name = 'mrf_5mm_';
 
 % optional flags
-flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
+flag_backup = 0; % 0: off,  1: only backup,  2: backup and send .seq
 flag_report = 0; % 0: off,  1: only timings, 2: full report (slow)
 flag_pns    = 1; % 0: off,  1: simulate PNS stimulation
 flag_sound  = 0; % 0: off,  1: simulate gradient sound
@@ -16,10 +16,10 @@ pns_orientation = 'coronal';
 pulseq_init();
 
 %% FOV geometry
-FOV.Nxy      = 128;         % [ ] matrix size
+FOV.Nxy      = 96;         % [ ] matrix size
 FOV.Nz       = 1;           % [ ] numer of "stack-of-spirals", 1 -> 2D
-FOV.fov_xy   = 150  *1e-3;  % [m] FOV geometry
-FOV.dz       = 3   *1e-3;   % [m] slab or slice thickness
+FOV.fov_xy   = 96  *1e-3;  % [m] FOV geometry
+FOV.dz       = 5   *1e-3;   % [m] slab or slice thickness
 FOV.z_offset = 0    *1e-3;  % [m] slice offset
 FOV.fov_z    = FOV.dz;
 FOV_init();

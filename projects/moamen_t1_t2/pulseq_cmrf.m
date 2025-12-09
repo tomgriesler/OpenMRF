@@ -1,9 +1,9 @@
 %% init pulseq
 clear
-seq_name = 'cardiac_mrf_3mm';
+seq_name = 'cardiac_mrf_5mm';
 
 % optional flags
-flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
+flag_backup = 0; % 0: off,  1: only backup,  2: backup and send .seq
 flag_report = 0; % 0: off,  1: only timings, 2: full report (slow)
 flag_pns    = 1; % 0: off,  1: simulate PNS stimulation
 flag_sound  = 0; % 0: off,  1: simulate gradient sound
@@ -16,10 +16,10 @@ pns_orientation = 'coronal';
 pulseq_init();
 
 %% FOV geometry
-FOV.Nxy      = 128;         % [ ] matrix size
+FOV.Nxy      = 96;         % [ ] matrix size
 FOV.Nz       = 1;           % [ ] numer of "stack-of-spirals", 1 -> 2D
-FOV.fov_xy   = 150  *1e-3;  % [m] FOV geometry
-FOV.dz       = 3   *1e-3;   % [m] slab or slice thickness
+FOV.fov_xy   = 96  *1e-3;  % [m] FOV geometry
+FOV.dz       = 5   *1e-3;   % [m] slab or slice thickness
 FOV.z_offset = 0    *1e-3;  % [m] slice offset
 FOV.fov_z    = FOV.dz;
 FOV_init();
@@ -40,17 +40,17 @@ MRF.enc_list = { % the following encoding list is only an example which includes
 'T2';
 'T2';
 'Inversion';
-'Saturation';
-'SL';
-'SL';
-'Inversion';
-'Saturation';
 'No_Prep';
-'No_Prep';
+'T2';
+'T2';
 'Inversion';
 'No_Prep';
-'MLEV';
-'MLEV'
+'T2';
+'T2';
+'Inversion';
+'No_Prep';
+'T2';
+'T2';
 };
 
 MRF.n_segm = numel(MRF.enc_list);
@@ -120,19 +120,19 @@ INV.rf_type      = 'HYPSEC_inversion';
 INV.tExc         = 10 *1e-3;  % [s]  hypsech pulse duration
 INV.beta         = 700;       % [Hz] maximum rf peak amplitude
 INV.mu           = 4.9;       % [ ]  determines amplitude of frequency sweep
-INV.inv_rec_time = [15 75 150 250] *1e-3;
+INV.inv_rec_time = [21 56 400 150] *1e-3;
 INV = INV_init(INV, FOV, system);
 
 %% params: Saturation
-SAT.mode         = 'on';
-SAT.rf_type      = 'adiabatic_BIR4';
-SAT.bir4_tau     = 10 *1e-3;  % [s]  bir4 pulse duration
-SAT.bir4_f1      = 640;       % [Hz] maximum rf peak amplitude
-SAT.bir4_beta    = 10;        % [ ]  am waveform parameter
-SAT.bir4_kappa   = atan(10);  % [ ]  fm waveform parameter
-SAT.bir4_dw0     = 30000;     % [rad/s] fm waveform scaling
-SAT.sat_rec_time = [100 200] *1e-3; % [s] saturation times
-SAT = SAT_init(SAT, FOV, system);
+% SAT.mode         = 'on';
+% SAT.rf_type      = 'adiabatic_BIR4';
+% SAT.bir4_tau     = 10 *1e-3;  % [s]  bir4 pulse duration
+% SAT.bir4_f1      = 640;       % [Hz] maximum rf peak amplitude
+% SAT.bir4_beta    = 10;        % [ ]  am waveform parameter
+% SAT.bir4_kappa   = atan(10);  % [ ]  fm waveform parameter
+% SAT.bir4_dw0     = 30000;     % [rad/s] fm waveform scaling
+% SAT.sat_rec_time = [100 200] *1e-3; % [s] saturation times
+% SAT = SAT_init(SAT, FOV, system);
 
 %% params: T2 preparation
 T2.exc_mode   = 'adiabatic_BIR4';
@@ -142,34 +142,34 @@ T2.bir4_f1    = 640;       % [Hz] maximum rf peak amplitude
 T2.bir4_beta  = 10;        % [ ]  am waveform parameter
 T2.bir4_kappa = atan(10);  % [ ]  fm waveform parameter
 T2.bir4_dw0   = 30000;     % [rad/s] fm waveform scaling
-T2.prep_times = [40 80] * 1e-3;  % [s] inversion times
+T2.prep_times = [40 80 40 80 40 80 40 80] * 1e-3;  % [s] inversion times
 T2            = T2_init(T2, FOV, system);
 
 %% params: Spin-Lock
-
-% spin-lock pulses
-SL.relax_type = {'T1p'};         % T1p or T2p or T2
-SL.seq_type   = {'BSL'};         % BSL or CSL or RESL
-SL.tSL        = [40 80] *1e-3;   % [s]  SL time
-SL.fSL        = [200 200];       % [Hz] SL amplitude
-
-% excitation pulses
-SL.exc_mode  = 'adiabatic_AHP';  % 'adiabatic_AHP', 'sinc', 'sigpy_SLR' or 'bp'
-SL.exc_time  = 3.0 *1e-3;        % [s] excitation time
-SL.adia_wmax = 600 * 2*pi;       % [rad/s] amplitude of adiabatic pulse
-
-% refocusing pulses
-SL.rfc_mode = 'bp';              % 'bp', 'sinc', 'sigpy_SLR' or 'comp'
-SL.rfc_time = 1.0 *1e-3;         % [s] refocusing time
-
-SL = SL_init(SL, FOV, system);
+% 
+% % spin-lock pulses
+% SL.relax_type = {'T1p'};         % T1p or T2p or T2
+% SL.seq_type   = {'BSL'};         % BSL or CSL or RESL
+% SL.tSL        = [40 80] *1e-3;   % [s]  SL time
+% SL.fSL        = [200 200];       % [Hz] SL amplitude
+% 
+% % excitation pulses
+% SL.exc_mode  = 'adiabatic_AHP';  % 'adiabatic_AHP', 'sinc', 'sigpy_SLR' or 'bp'
+% SL.exc_time  = 3.0 *1e-3;        % [s] excitation time
+% SL.adia_wmax = 600 * 2*pi;       % [rad/s] amplitude of adiabatic pulse
+% 
+% % refocusing pulses
+% SL.rfc_mode = 'bp';              % 'bp', 'sinc', 'sigpy_SLR' or 'comp'
+% SL.rfc_time = 1.0 *1e-3;         % [s] refocusing time
+% 
+% SL = SL_init(SL, FOV, system);
 
 %% params: MLEV T2p preparation
-MLEV.n_mlev   = [4 8];           % number of MLEV4 preps
-MLEV.fSL      = 250;             % [Hz] eff spin-lock field strength
-MLEV.t_inter  = 1 *1e-5;         % [s]  inter pulse delay for T2 preparation
-MLEV.exc_mode = 'adiabatic_AHP'; % 'adiabatic_BIR4' or 'adiabatic_AHP'
-MLEV = MLEV_init(MLEV, FOV, system);
+% MLEV.n_mlev   = [4 8];           % number of MLEV4 preps
+% MLEV.fSL      = 250;             % [Hz] eff spin-lock field strength
+% MLEV.t_inter  = 1 *1e-5;         % [s]  inter pulse delay for T2 preparation
+% MLEV.exc_mode = 'adiabatic_AHP'; % 'adiabatic_BIR4' or 'adiabatic_AHP'
+% MLEV = MLEV_init(MLEV, FOV, system);
 
 %% params: Fat Saturation
 FAT.mode = 'off';

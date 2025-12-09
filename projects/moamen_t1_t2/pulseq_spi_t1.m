@@ -2,10 +2,10 @@
 % basis: SPI readout
 % use for: T1 mapping
 clear
-seq_name = 't1_mapping_3mm';
+seq_name = 't1_mapping_5mm';
 
 % optional flags
-flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
+flag_backup = 0; % 0: off,  1: only backup,  2: backup and send .seq
 flag_report = 0; % 0: off,  1: only timings, 2: full report (slow)
 flag_pns    = 0; % 0: off,  1: simulate PNS stimulation
 flag_sound  = 0; % 0: off,  1: simulate gradient sound
@@ -18,10 +18,10 @@ pns_orientation = 'coronal';
 pulseq_init();
 
 %% FOV geometry
-FOV.Nxy      = 128;         % [ ] matrix size
+FOV.Nxy      = 96;         % [ ] matrix size
 FOV.Nz       = 1;           % [ ] numer of "stack-of-spirals", 1 -> 2D
-FOV.fov_xy   = 150  *1e-3;  % [m] FOV geometry
-FOV.dz       = 3   *1e-3;   % [m] slab or slice thickness
+FOV.fov_xy   = 96  *1e-3;  % [m] FOV geometry
+FOV.dz       = 5   *1e-3;   % [m] slab or slice thickness
 FOV.z_offset = 0    *1e-3;  % [m] slice offset
 FOV.fov_z    = FOV.dz;
 FOV_init();
@@ -37,8 +37,8 @@ SPI.Trec = 5;
 
 %% inversion
 INV.mode = 'on';
-INV.inv_rec_time = [25 45 81 146 263 475 855 1540 2775 5000] *1e-3;
-% INV.inv_rec_time = [50 100 150 200 250 300 400 500 600 700 800 900 1000 1200 1500 2000 3000 4000 5000] *1e-3;
+% INV.inv_rec_time = [25 45 81 146 263 475 855 1540 2775 5000] *1e-3;
+INV.inv_rec_time = [50 100 150 200 250 300 400 500 600 700 800 900 1000 1200 1500 2000 3000 4000 5000] *1e-3;
 INV = INV_init(INV, FOV, system);
 
 %% fat saturation and reset
