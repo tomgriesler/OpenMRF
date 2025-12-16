@@ -1,8 +1,8 @@
 %% load mrf study
 % clear
 
-% study_path      = 'E:\University of Michigan Dropbox\Tom Griesler\rawdata_new\technion\2025-12-04\';
-% study_name_mrf  = 'meas_MID00290_FID08995_251204_1426_tomgr_cardiac_mrf_3mm.dat';
+study_path      = 'E:\University of Michigan Dropbox\Tom Griesler\rawdata_new\technion\2025-12-04\';
+study_name_mrf  = 'meas_MID00290_FID08995_251204_1426_tomgr_cardiac_mrf_3mm.dat';
 % study_name_traj = 'meas_MID00035_FID92121_250725_1452_tomgr_traj_250725_1421_cor.dat';
 
 % load twix_object, study info and pulseq meta data
