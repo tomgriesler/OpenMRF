@@ -1,14 +1,15 @@
 %% init pulseq
 clear
-seq_name = 'mrf_dz5_fov96';
+seq_name = 'mrf_';
 
 % optional flags
-flag_backup = 0; % 0: off,  1: only backup,  2: backup and send .seq
+flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
 flag_report = 0; % 0: off,  1: only timings, 2: full report (slow)
-flag_pns    = 1; % 0: off,  1: simulate PNS stimulation
+flag_pns    = 0; % 0: off,  1: simulate PNS stimulation
 flag_sound  = 0; % 0: off,  1: simulate gradient sound
 flag_mrf    = 0; % 0: off,  1: simulate sequence via MRF toolbox
 
+% select scanner
 pulseq_scanner = 'Siemens_Prisma_3T_Technion';
 pns_orientation = 'coronal';
 
@@ -16,10 +17,10 @@ pns_orientation = 'coronal';
 pulseq_init();
 
 %% FOV geometry
-FOV.Nxy      = 96;         % [ ] matrix size
+FOV.Nxy      = 256;         % [ ] matrix size
 FOV.Nz       = 1;           % [ ] numer of "stack-of-spirals", 1 -> 2D
-FOV.fov_xy   = 96  *1e-3;  % [m] FOV geometry
-FOV.dz       = 5   *1e-3;   % [m] slab or slice thickness
+FOV.fov_xy   = 256  *1e-3;  % [m] FOV geometry
+FOV.dz       = 8   *1e-3;   % [m] slab or slice thickness
 FOV.z_offset = 0    *1e-3;  % [m] slice offset
 FOV.fov_z    = FOV.dz;
 FOV_init();
@@ -30,6 +31,13 @@ MRF.pattern         = 'yun'; % select pattern: e.g. 'yun' or 'cao'
 MRF.FAs(MRF.FAs==0) = 1e-6;
 seq_name            = [seq_name MRF.pattern];
 MRF.NR              = numel(MRF.FAs);
+
+% or define a custom pattern
+% MRF.pattern = 'sin_70';
+% MRF.FAs     = MRF_calc_FAs_sin([5, 30, 200; 1, 70, 200; 10, 10, 100]) *pi/180;
+% MRF.NR      = numel(MRF.FAs);
+% MRF.TRs     = 12 *1e-3 *ones(MRF.NR,1);
+% seq_name    = [seq_name MRF.pattern];
 
 %% params: Spiral Readouts
 
