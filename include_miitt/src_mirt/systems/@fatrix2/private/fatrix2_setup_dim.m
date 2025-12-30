@@ -73,7 +73,7 @@ if ~ob.accept1d
 		warn '1d idim with full imask and >1d odim may not work'
 	end
 
-	if numel(ob.odim) == 1 && numel(ob.idim) > 1 && ob.size(1) == prod(ob.odim)
-		warn '1d odim full omask, >1d idim: transpose may not work'
-	end
+	%if numel(ob.odim) == 1 && numel(ob.idim) > 1 && ob.size(1) == prod(ob.odim)
+		%warn '1d odim full omask, >1d idim: transpose may not work'
+	%end
 end
