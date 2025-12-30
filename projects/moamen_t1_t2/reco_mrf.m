@@ -1,8 +1,8 @@
 %% load mrf study
-% clear
+clear
 
-study_path      = 'E:\University of Michigan Dropbox\Tom Griesler\rawdata_new\technion\2025-12-04\';
-study_name_mrf  = 'meas_MID00290_FID08995_251204_1426_tomgr_cardiac_mrf_3mm.dat';
+study_path      = 'E:\University of Michigan Dropbox\Tom Griesler\rawdata_new\technion\2025-12-24\';
+study_name_mrf  = 'meas_MID00136_FID09594_251223_1244_tomgr_cardiac_mrf_short_8mm.dat';
 % study_name_traj = 'meas_MID00035_FID92121_250725_1452_tomgr_traj_250725_1421_cor.dat';
 
 % load twix_object, study info and pulseq meta data
@@ -118,7 +118,7 @@ mixed_reco = mg_mixed_mrf_reco(DATA, ktraj(:,phi_id,:), Nxy, fov);
 params_reco.DirectMatching     = false; % do reco via direct matching
 params_reco.DirectMatching_SVD = true;  % do reco via SVD compression of the dictionary before matching
 params_reco.LowRank            = true;  % do reco via iterative low-rank reconstruction
-params_reco.ROVIR              = true;  % use ROVIR coils for outer FOV artifact suppression
+params_reco.ROVIR              = false;  % use ROVIR coils for outer FOV artifact suppression
 params_reco.CoilComp           = true;  % use SVD Coil Compression
 params_reco.ESPIRiT            = true;  % use ESPIRiT or openadapt for calculating cmaps
 params_reco.rovir_thresh       = 2;     % automatic thresholding for ROVIR
