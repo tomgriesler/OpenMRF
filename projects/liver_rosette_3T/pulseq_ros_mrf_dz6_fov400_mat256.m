@@ -2,12 +2,12 @@
 % basis: SPI readout
 % use for: cardiac fingerprinting
 clear
-seq_name = 'amrf_t1_t2_3T_MLEV';
+seq_name = 'ros_mrf_dz6_fov400_mat256';
 
 % optional flags
-flag_backup = 0; % 0: off,  1: only backup,  2: backup and send .seq
+flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
 flag_report = 0; % 0: off,  1: only timings, 2: full report (slow)
-flag_pns    = 0; % 0: off,  1: simulate PNS stimulation
+flag_pns    = 1; % 0: off,  1: simulate PNS stimulation
 flag_sound  = 0; % 0: off,  1: simulate gradient sound
 flag_mrf    = 0; % 0: off,  1: simulate sequence via MRF toolbox
 
@@ -24,7 +24,7 @@ pulseq_init();
 FOV.Nxy      = 256;         % [ ] matrix size
 FOV.Nz       = 1;           % [ ] numer of "stack-of-spirals", 1 -> 2D
 FOV.fov_xy   = 400  *1e-3;  % [m] FOV geometry
-FOV.dz       = 8   *1e-3;   % [m] slab or slice thickness
+FOV.dz       = 6   *1e-3;   % [m] slab or slice thickness
 FOV.z_offset = 0    *1e-3;  % [m] slice offset
 FOV.fov_z    = FOV.dz;
 FOV_init();
@@ -45,22 +45,22 @@ MRF.enc_list = {
 'No_Prep';
 'MLEV';
 'MLEV';
-'MLEV';
+% 'MLEV';
 'Inversion';
 'No_Prep';
 'MLEV';
 'MLEV';
-'MLEV';
+% 'MLEV';
 'Inversion';
 'No_Prep';
 'MLEV';
 'MLEV';
-'MLEV';
+% 'MLEV';
 'Inversion';
 'No_Prep';
 'MLEV';
 'MLEV';
-'MLEV';
+% 'MLEV';
 };
 
 MRF.n_segm = numel(MRF.enc_list);
@@ -68,11 +68,17 @@ MRF.n_segm = numel(MRF.enc_list);
 %% MRF flipangle and repetition times: variable FA
 MRF.nr  = 30;                   % numer of readouts per hear beat
 MRF.NR  = MRF.n_segm * MRF.nr;  % total number of readouts
-% MRF.FAs = deg2rad(15)*ones(MRF.NR, 1);
-MRF.FAs = repmat(deg2rad([5:1.25:13.75 ones(1, 22)*15]), 1, MRF.n_segm);
-MRF.TRs = 17 *1e-3 *ones(MRF.NR,1); 
-MRF.TRs(MRF.nr:MRF.nr:end-1) = MRF.TRs(MRF.nr:MRF.nr:end-1)+0.4;
-% MRF.TRs = zeros(MRF.NR, 1);
+
+% % MRF.FAs = deg2rad(15)*ones(MRF.NR, 1);
+% MRF.FAs = repmat(deg2rad([5:1.25:13.75 ones(1, 22)*15]), 1, MRF.n_segm);
+% MRF.TRs = 17 *1e-3 *ones(MRF.NR,1); 
+% MRF.TRs(MRF.nr:MRF.nr:end-1) = MRF.TRs(MRF.nr:MRF.nr:end-1)+0.4;
+% % MRF.TRs = zeros(MRF.NR, 1);
+
+MRF.TRs    = 17 *1e-3 *ones(MRF.NR,1);  % minimize TRs
+MRF.FA_min = 4 *pi/180;                  % [rad] minimum flip angle
+MRF.FA_max = 15 *pi/180;                 % [rad] minimum flip angle
+MRF.FAs    = MRF_calc_FAs_sin_rand(MRF.FA_min, MRF.FA_max, MRF.nr, MRF.n_segm);
 
 %% params: Spiral Readouts
 
@@ -125,11 +131,13 @@ INV.rf_type = 'HYPSEC_inversion';
 INV.tExc = 10 *1e-3;
 INV.mu   = 4.9;
 INV.beta = 700;
-INV.inv_rec_time = [12 300 12 300] *1e-3;
+% INV.inv_rec_time = [12 300 12 300] *1e-3;
+INV.inv_rec_time = [21 56 400 150] *1e-3;
 INV = INV_init(INV, FOV, system);
 
 %% params: T2 preparation
-MLEV.n_mlev     = [1 2 4 1 2 4 1 2 4 1 2 4];           % number of MLEV4 preps
+% MLEV.n_mlev     = [1 2 4 1 2 4 1 2 4 1 2 4];           % number of MLEV4 preps
+MLEV.n_mlev     = [1 2 1 2 1 2 1 2];           % number of MLEV4 preps
 MLEV.fSL        = 500;             % [Hz] eff spin-lock field strength
 MLEV.t_inter    = 10 *1e-3;         % [s]  inter pulse delay for T2 preparation
 MLEV.exc_mode   = 'adiabatic_BIR4'; % 'adiabatic_BIR4' or 'adiabatic_AHP'
@@ -145,14 +153,33 @@ MLEV = MLEV_init(MLEV, FOV, system);
 %% check MRF encoding params
 MRF_check_enc_list();
 
+%% adjust dynamic segment delays
+MRF_adjust_segment_delays();
+
 %% Trigger Mode
 MRF.mode_trig = 'off';
 
-for ii=1:MRF.n_segm
-    MRF.delay_dynamic(ii, 1) = mr.makeDelay(1e-5);
+% for ii=1:MRF.n_segm
+%     MRF.delay_dynamic(ii, 1) = mr.makeDelay(1e-5);
+% end
+% 
+% MRF.delay_soft   = mr.makeDelay(1e-5); % minimize delays
+
+% calc fixed segment timings
+MRF.acq_duration      = sum(SPI.TR(1:MRF.nr));
+MRF.prep_acq_duration = MRF.prep_max + MRF.acq_duration;
+
+if strcmp(MRF.mode_trig, 'on')
+    MRF.delay_soft = mr.makeSoftDelay(0, 'acq_end', 'offset', -MRF.prep_acq_duration, 'factor', 1); % block_duration [s] = offset [s] + input [s] / factor
+    TRIG_IN = mr.makeTrigger('physio1', 'system', system, 'delay', 10e-6, 'duration', 10e-3); % Input Trigger
+else
+    MRF.seg_duration = 1000 *1e-3; % [s] adjust segment duration
+    MRF.delay_soft   = mr.makeDelay( round((MRF.seg_duration-MRF.prep_acq_duration)/system.gradRasterTime)*system.gradRasterTime ); % fixed delay
 end
 
-MRF.delay_soft   = mr.makeDelay(1e-5); % minimize delays
+%% noise pre-scans
+SPI.Nnoise = 16;
+SPI_add_prescans();
 
 %% ---------- add sequence objects ----------
 MRF_add_segments();
