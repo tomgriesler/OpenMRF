@@ -1,5 +1,10 @@
-function save_study_results(study_info, res, default_dir)
-    savename = sprintf('%s.mat', study_info.study_name(1:end-4));
+function save_study_results(study_name, res, default_dir)
+    if ~isempty(study_name)
+        [~, savename] = fileparts(study_name);
+        savename = sprintf('%s.mat', savename);
+    else
+        savename = '.mat';
+    end
     if nargin < 3
         [filename, pathname] = uiputfile('*.mat', 'Save results as', savename);
     else 
@@ -15,7 +20,7 @@ function save_study_results(study_info, res, default_dir)
         disp('Save canceled by user.');
     else
         fullpath = fullfile(pathname, filename);
-        save(fullpath, 'res');
+        save(fullpath, 'res', '-v7.3');
         fprintf('Saved variables to: %s\n', fullpath);
     end
 end
