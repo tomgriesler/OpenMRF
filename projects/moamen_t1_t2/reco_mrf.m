@@ -1,8 +1,8 @@
 %% load mrf study
 clear
 
-study_path      = 'E:\University of Michigan Dropbox\Tom Griesler\rawdata_new\technion\2025-12-24\';
-study_name_mrf  = 'meas_MID00136_FID09594_251223_1244_tomgr_cardiac_mrf_short_8mm.dat';
+study_path      = 'E:\University of Michigan Dropbox\Tom Griesler\rawdata_new\technion\2026-01-08\vol_2\';
+study_name_mrf  = 'meas_MID00347_FID10731_251231_0930_tomgr_spi_mrf_dz6_fov400_mat256.dat';
 % study_name_traj = 'meas_MID00035_FID92121_250725_1452_tomgr_traj_250725_1421_cor.dat';
 
 % load twix_object, study info and pulseq meta data
@@ -22,11 +22,11 @@ softDelay = []; % only for cMRF -> twix_obj.hdr.Meas.adFree(7...) * 1e-3
 %% define dictionary and look-up table
 
 % T1, T2
-P.T1.range = [0.01,  4]; P.T1.factor = 1.025;
-P.T2.range = [0.001, 3]; P.T2.factor = 1.025;
-P = MRF_get_param_dict(P, {'T2<T1'});
-look_up       = [P.T1, P.T2];
-look_up_names = {'T1', 'T2'};
+% P.T1.range = [0.01,  4]; P.T1.factor = 1.025;
+% P.T2.range = [0.001, 3]; P.T2.factor = 1.025;
+% P = MRF_get_param_dict(P, {'T2<T1'});
+% look_up       = [P.T1, P.T2];
+% look_up_names = {'T1', 'T2'};
 
 % T1, T2, T1p
 % P.T1.range  = [0.01,  4]; P.T1.factor  = 1.05;
@@ -37,12 +37,12 @@ look_up_names = {'T1', 'T2'};
 % look_up_names = {'T1', 'T2', 'T1p'};
 
 % T1, T2, B1+ correction
-% P.T1.range  = [0.01,  4]; P.T1.factor = 1.025;
-% P.T2.range  = [0.001, 3]; P.T2.factor = 1.025;
-% P.db1.range = [0.8, 1.2]; P.db1.step  = 0.025;
-% P = MRF_get_param_dict(P, {'T2<T1'});
-% look_up       = [P.T1, P.T2, P.db1];
-% look_up_names = {'T1', 'T2', 'db1'};
+P.T1.range  = [0.01,  4]; P.T1.factor = 1.025;
+P.T2.range  = [0.001, 3]; P.T2.factor = 1.025;
+P.db1.range = [0.8, 1.2]; P.db1.step  = 0.025;
+P = MRF_get_param_dict(P, {'T2<T1'});
+look_up       = [P.T1, P.T2, P.db1];
+look_up_names = {'T1', 'T2', 'db1'};
 
 %% caclulate dictionary
 
@@ -247,16 +247,16 @@ if isfield(match.LR, 'db1')
     db1lims = [min(P.db1), max(P.db1)];
     db1cmp  = get_cmp('blue_red', 1000);
     figure()
-    ax1 = subplot(1,3,1);
-        imagesc(match.direct.db1, db1lims); axis image; axis off; colormap(gca, db1cmp); colorbar;
-        title('dB1+ direct');
-    ax2 = subplot(1,3,2);
+    % ax1 = subplot(1,3,1);
+    %     imagesc(match.direct.db1, db1lims); axis image; axis off; colormap(gca, db1cmp); colorbar;
+    %     title('dB1+ direct');
+    ax2 = subplot(1, 2, 1);
         imagesc(match.SVD.db1, db1lims); axis image; axis off; colormap(gca, db1cmp); colorbar;
         title('dB1+ SVD');
-    ax3 = subplot(1,3,3);
+    ax3 = subplot(1, 2, 2);
         imagesc(match.LR.db1, db1lims); axis image; axis off; colormap(gca, db1cmp); colorbar;
         title('dB1+ LR');
-    linkaxes([ax1 ax2 ax3]);
+    % linkaxes([ax1 ax2 ax3]);
     clear ax1 ax2 ax3;
 end
 
@@ -337,4 +337,4 @@ end
 res.images = images;
 res.match = match;
 % save_study_results(study_info, res);
-save(fullfile(study_path, [study_name_mrf(1:end-4), '.mat']), 'res');
+save(fullfile(study_path, [study_name_mrf(1:end-4), '_b1.mat']), 'res');

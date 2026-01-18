@@ -1,6 +1,6 @@
 %% init pulseq
 clear
-seq_name = 'cardiac_mrf_short_8mm';
+seq_name = 'mrf_moamen_3mm';
 
 % optional flags
 flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
@@ -20,7 +20,7 @@ pulseq_init();
 FOV.Nxy      = 256;         % [ ] matrix size
 FOV.Nz       = 1;           % [ ] numer of "stack-of-spirals", 1 -> 2D
 FOV.fov_xy   = 256  *1e-3;  % [m] FOV geometry
-FOV.dz       = 8   *1e-3;   % [m] slab or slice thickness
+FOV.dz       = 3   *1e-3;   % [m] slab or slice thickness
 FOV.z_offset = 0    *1e-3;  % [m] slice offset
 FOV.fov_z    = FOV.dz;
 FOV_init();
@@ -91,8 +91,8 @@ SPI.exc_tbw       = 2;           % [ ] time bandwidth product
 SPI.exc_fa_mode   = 'import';    % 'equal',  'ramped',  'import' 
 SPI.lim_gz_slew   = 0.9;         % [ ] reduce stimulation during slice excitation
 % SPI.lim_gz_slew   = 1/sqrt(3);         % [ ] reduce stimulation during slice excitation
-SPI.lim_reph_slew = 0.9;         % [ ] reduce stimulation during slice rephaser
-% SPI.lim_reph_slew = 1/sqrt(3);         % [ ] reduce stimulation during slice rephaser
+% SPI.lim_reph_slew = 0.9;         % [ ] reduce stimulation during slice rephaser
+SPI.lim_reph_slew = 1/sqrt(3);         % [ ] reduce stimulation during slice rephaser
 
 % gradient spoiling
 SPI.spoil_nTwist   = 4;          % [ ] number of 2pi twists in z-direction, 0 for balanced

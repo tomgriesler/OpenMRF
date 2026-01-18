@@ -1,11 +1,11 @@
 %% init pulseq
 clear
-seq_name = 'cardiac_mrf_short_3mm';
+seq_name = 'spi_mrf_dz8_fov354_mat256_bir4';
 
 % optional flags
 flag_backup = 1; % 0: off,  1: only backup,  2: backup and send .seq
 flag_report = 0; % 0: off,  1: only timings, 2: full report (slow)
-flag_pns    = 0; % 0: off,  1: simulate PNS stimulation
+flag_pns    = 1; % 0: off,  1: simulate PNS stimulation
 flag_sound  = 0; % 0: off,  1: simulate gradient sound
 flag_mrf    = 0; % 0: off,  1: simulate sequence via MRF toolbox
 
@@ -19,8 +19,8 @@ pulseq_init();
 %% FOV geometry
 FOV.Nxy      = 256;         % [ ] matrix size
 FOV.Nz       = 1;           % [ ] numer of "stack-of-spirals", 1 -> 2D
-FOV.fov_xy   = 256  *1e-3;  % [m] FOV geometry
-FOV.dz       = 3   *1e-3;   % [m] slab or slice thickness
+FOV.fov_xy   = 354  *1e-3;  % [m] FOV geometry
+FOV.dz       = 8   *1e-3;   % [m] slab or slice thickness
 FOV.z_offset = 0    *1e-3;  % [m] slice offset
 FOV.fov_z    = FOV.dz;
 FOV_init();
@@ -38,24 +38,20 @@ FOV_init();
 MRF.enc_list = { % the following encoding list is only an example which includes all possible preparations
 'Inversion';
 'No_Prep';
-'MLEV';
-'MLEV';
-'MLEV';
+'T2';
+'T2';
 'Inversion';
 'No_Prep';
-'MLEV';
-'MLEV';
-'MLEV';
+'T2';
+'T2';
 'Inversion';
 'No_Prep';
-'MLEV';
-'MLEV';
-'MLEV';
+'T2';
+'T2';
 'Inversion';
 'No_Prep';
-'MLEV';
-'MLEV';
-'MLEV';
+'T2';
+'T2';
 };
 
 MRF.n_segm = numel(MRF.enc_list);
@@ -63,17 +59,10 @@ MRF.n_segm = numel(MRF.enc_list);
 %% params: MRF flipangles and repetition times
 MRF.nr     = 48;                         % numer of readouts per hear beat
 MRF.NR     = MRF.n_segm * MRF.nr;        % total number of readouts
-MRF.TRs    = 0.0 *1e-3 *ones(MRF.NR,1);  % minimize TRs
+MRF.TRs    = 7.0 *1e-3 *ones(MRF.NR,1);  % minimize TRs
 MRF.FA_min = 4 *pi/180;                  % [rad] minimum flip angle
 MRF.FA_max = 15 *pi/180;                 % [rad] minimum flip angle
 MRF.FAs    = MRF_calc_FAs_sin_rand(MRF.FA_min, MRF.FA_max, MRF.nr, MRF.n_segm);
-
-% or use constant FAs
-% MRF.FAs = 15*pi/180 * ones(MRF.NR,1);
-
-% or import from .mat file
-% load('FAs.mat');
-% MRF.FAs = FAs;
 
 %% params: Spiral Readouts
 
@@ -90,13 +79,11 @@ SPI.exc_time      = 0.8 *1e-3;   % [s] excitation time
 SPI.exc_tbw       = 2;           % [ ] time bandwidth product
 SPI.exc_fa_mode   = 'import';    % 'equal',  'ramped',  'import' 
 SPI.lim_gz_slew   = 0.9;         % [ ] reduce stimulation during slice excitation
-% SPI.lim_gz_slew   = 1/sqrt(3);         % [ ] reduce stimulation during slice excitation
-% SPI.lim_reph_slew = 0.9;         % [ ] reduce stimulation during slice rephaser
-SPI.lim_reph_slew = 1/sqrt(3);         % [ ] reduce stimulation during slice rephaser
+SPI.lim_reph_slew = 0.9;         % [ ] reduce stimulation during slice rephaser
 
 % gradient spoiling
 SPI.spoil_nTwist   = 4;          % [ ] number of 2pi twists in z-direction, 0 for balanced
-SPI.spoil_duration = 1.5 *1e-3;  % [s] time for spoiler and rewinder gradients
+SPI.spoil_duration = 0.8 *1e-3;  % [s] time for spoiler and rewinder gradients
 SPI.lim_spoil_slew = 0.9;        % [ ] reduce stimulation during gradient spoiling
 
 % rf spoiling
@@ -130,19 +117,16 @@ INV.mu           = 4.9;       % [ ]  determines amplitude of frequency sweep
 INV.inv_rec_time = [21 56 400 150] *1e-3;
 INV = INV_init(INV, FOV, system);
 
-%% params: MLEV T2p preparation
-MLEV.n_mlev     = [1 2 4 1 2 4 1 2 4 1 2 4];           % number of MLEV4 preps
-MLEV.fSL        = 500;             % [Hz] eff spin-lock field strength
-MLEV.t_inter    = 10 *1e-3;         % [s]  inter pulse delay for T2 preparation
-MLEV.exc_mode   = 'adiabatic_BIR4'; % 'adiabatic_BIR4' or 'adiabatic_AHP'
-MLEV.bir4_tau   = 10 *1e-3;  % [s]  bir4 pulse duration
-MLEV.bir4_f1    = 640;       % [Hz] maximum rf peak amplitude
-MLEV.bir4_beta  = 10;        % [ ]  am waveform parameter
-MLEV.bir4_kappa = atan(10);  % [ ]  fm waveform parameter
-MLEV.bir4_dw0   = 30000;     % [rad/s] fm waveform scaling
-% MLEV.crush_lim_slew = 0.5;
-% MLEV.crush_lim_grad = 0.5;
-MLEV = MLEV_init(MLEV, FOV, system);
+%% params: T2 preparation
+T2.exc_mode   = 'adiabatic_BIR4';
+T2.rfc_dur    = 2 *1e-3;   % [s]  duration of composite refocusing pulses
+T2.bir4_tau   = 10 *1e-3;  % [s]  bir4 pulse duration
+T2.bir4_f1    = 640;       % [Hz] maximum rf peak amplitude
+T2.bir4_beta  = 10;        % [ ]  am waveform parameter
+T2.bir4_kappa = atan(10);  % [ ]  fm waveform parameter
+T2.bir4_dw0   = 30000;     % [rad/s] fm waveform scaling
+T2.prep_times = [40 80 40 80 40 80 40 80] * 1e-3;  % [s] inversion times
+T2            = T2_init(T2, FOV, system);
 
 %% params: Fat Saturation
 FAT.mode = 'off';
