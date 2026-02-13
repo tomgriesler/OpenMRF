@@ -2,7 +2,7 @@
 clear; clc;
 
 %%
-study_path = 'E:\University of Michigan Dropbox\Tom Griesler\rawdata_new\technion\2026-01-14\';
+study_path = 'E:\University of Michigan Dropbox\Tom Griesler\rawdata_new\technion\2026-01-28\';
 study_names_mrf = dir(fullfile(study_path, 'meas*tomgr_spi_mrf*.dat'));
 study_names_mrf = {study_names_mrf.name};
 

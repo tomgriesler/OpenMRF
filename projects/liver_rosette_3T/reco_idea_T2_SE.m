@@ -6,7 +6,7 @@
 clear
 
 % read rawdata from .dat
-study_path = 'E:\University of Michigan Dropbox\Tom Griesler\rawdata_new\technion\2026-01-12\NIST_MnCL2\gold_standard';
+study_path = '';
 study_name = { 'meas_MID00157_FID10912_se_te10.dat',
                'meas_MID00158_FID10913_se_te15.dat',
                'meas_MID00159_FID10914_se_te20.dat',
@@ -73,4 +73,4 @@ res.mask = mask;
 res.Images = Images;
 res.TE = TE;
 
-save(fullfile(study_path, 'se_siemens_NIST_mncl2.mat'), 'res')
+save_study_results('t2_se_cartesian', res, study_path);

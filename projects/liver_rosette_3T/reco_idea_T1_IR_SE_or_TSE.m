@@ -6,17 +6,17 @@
 clear
 
 % read rawdata from .dat
-study_path = 'E:\University of Michigan Dropbox\Tom Griesler\rawdata_new\technion\2026-01-14';
-study_name = { 'meas_MID00121_FID11231_ir_se_ti35.dat',
-               'meas_MID00122_FID11232_ir_se_ti60.dat',
-               'meas_MID00123_FID11233_ir_se_ti95.dat',
-               'meas_MID00124_FID11234_ir_se_ti160.dat',
-               'meas_MID00125_FID11235_ir_se_ti260.dat',
-               'meas_MID00126_FID11236_ir_se_ti430.dat',
-               'meas_MID00127_FID11237_ir_se_ti710.dat',
-               'meas_MID00128_FID11238_ir_se_ti1180.dat',
-               'meas_MID00129_FID11239_ir_se_ti1940.dat',
-               'meas_MID00130_FID11240_ir_se_ti3200.dat'};
+study_path = '';
+study_name = { 'meas_MID00146_FID10901_ir_se_ti35.dat',
+               'meas_MID00148_FID10903_ir_se_ti60.dat',
+               'meas_MID00149_FID10904_ir_se_ti95.dat',
+               'meas_MID00150_FID10905_ir_se_ti160.dat',
+               'meas_MID00151_FID10906_ir_se_ti260.dat',
+               'meas_MID00152_FID10907_ir_se_ti430.dat',
+               'meas_MID00153_FID10908_ir_se_ti710.dat',
+               'meas_MID00154_FID10909_ir_se_ti1180.dat',
+               'meas_MID00155_FID10910_ir_se_ti1940.dat',
+               'meas_MID00156_FID10911_ir_se_ti3200.dat'};
 
 for j=1:numel(study_name)
     twix_obj = mapVBVD(fullfile(study_path, study_name{j}), 'ignoreSeg', 'removeOS');
@@ -75,4 +75,4 @@ res.mask = mask;
 res.Images = Images;
 res.TI = TI;
 
-save(fullfile(study_path, 'ir_se_siemens_NIST_mncl2.mat'), 'res')
+save_study_results('t1_ir_se_cartesian', res, study_path);
