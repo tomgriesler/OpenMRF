@@ -4,7 +4,8 @@ function [SEQ, SIM] = MRF_read_seq_file(seq_file, f0, adc_time_stamps, soft_dela
 % V1: 24.10.2024; M. Gram; University of Wuerzburg
 % V2: 17.04.2025; M. Gram; University of Wuerzburg; upgrade to pulseq v1.5, add extension support
 % V3: 08.07.2025; M. Gram; University of Wuerzburg; automatic adjustment of cardiac trigger delays
-% V4: 16.08.2025; M. Gram; University of Würzburg; prepare code for OpenMRF publication
+% V4: 16.08.2025; M. Gram; University of Wuerzburg; prepare code for OpenMRF publication
+% V5: 16.02.2026; M. Gram; University of Wuerzburg; add delays for GE TRID labels
 
 % ----- input: -----
 % seq_file:        path of the .seq file
@@ -112,6 +113,7 @@ SEQ.SHAPES      = read_seq_file_shapes(SEQ.FILE);
 SEQ = corr_soft_delays(SEQ, soft_delays);        % correct timings in case of soft delays
 SEQ = corr_trigger_delays(SEQ, adc_time_stamps); % correct timings in case of cardiac trigger
 SEQ = filter_kz_partitions(SEQ, kz_part);        % delete unnecessary blocks in case of kz partitions
+SEQ = correct_GE_timings(SEQ);                   % add a 117us delay for each GE TRID label
 SEQ.BLOCKS(find(SEQ.BLOCKS(:,2)==0),:) = [];     % delete blocks which only contain labels
 SEQ = delete_unnecessary_blocks(SEQ);            % delete blocks before first RF pulse and after last adc
 
@@ -563,6 +565,27 @@ function SEQ = filter_kz_partitions(SEQ, kz_part)
             end
             SEQ.BLOCKS = SEQ.BLOCKS(ind_start+1:ind_stop-1,:);
             SEQ.BLOCKS(:,1) = 1:size(SEQ.BLOCKS,1);
+        end
+    end
+end
+
+%% -------------------- correctt timgins for GE sequences --------------------
+function SEQ = correct_GE_timings(SEQ)
+    for j = 1:size(SEQ.BLOCKS,1)
+        if SEQ.BLOCKS(j,8)>0
+            temp_ext_id   = SEQ.BLOCKS(j, 8);
+            temp_ext_type = SEQ.EXTENSIONS(temp_ext_id, 2);
+            temp_ext_no   = SEQ.EXTENSIONS(temp_ext_id, 3);
+            if strcmp(SEQ.EXT_SPECS(temp_ext_type).type, 'LABELSET')
+                temp_ext_vals = strsplit(SEQ.EXT_SPECS(temp_ext_type).vals(temp_ext_no), ' ');
+                if strcmp(temp_ext_vals(3), 'TRID')
+                    if SEQ.BLOCKS(j,2) ~= 0
+                        error('TRID label combined with delay!');
+                    end
+                    SEQ.BLOCKS(j,2) = round(117*1e-6 / SEQ.DEFINITIONS.blockRasterTime); % add approximately 117us delay for each TRID segment
+                    SEQ.BLOCKS(j,8) = 0;
+                end
+            end
         end
     end
 end
