@@ -114,7 +114,6 @@ SPI.geo.traj_mode       = 'import';
 SPI.Nunique             = 299;                % number of unique projection angles
 SPI.deltak              = 1/FOV.fov_xy;       % [1/m] kspace sampling
 SPI.kmax                = SPI.deltak * FOV.Nxy/2;
-% SPI.geo.path            = 'rosette_alt_21lobes_299arms_21gmx_400mm_256mat_240415.mat';
 SPI.geo.path            = 'rosette_alt_17lobes_299arms_354mm_256mat_251231.mat';
 SPI.geo.BW              = 400 *1e3;      % [Hz] bandwidth of spiral acquisition
 SPI.geo.kmax            = SPI.kmax;      % determines resolution
