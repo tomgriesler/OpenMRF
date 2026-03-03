@@ -1,8 +1,8 @@
 %% load mrf study
 clear
 
-study_path      = 'E:\University of Michigan Dropbox\Tom Griesler\rawdata_new\technion\2026-01-28\';
-study_name_mrf  = 'meas_MID00060_FID12033_251231_0927_tomgr_spi_mrf_dz6_fov354_mat256.dat';
+study_path      = 'E:\University of Michigan Dropbox\Tom Griesler\rawdata_new\technion\2026-01-05\vol_1\';
+study_name_mrf  = 'meas_MID00102_FID10222_251231_0927_tomgr_spi_mrf_dz6_fov354_mat256.dat';
 
 % load twix_object, study info and pulseq meta data
 [twix_obj, study_info, PULSEQ] = pulseq_read_meas_siemens([study_path study_name_mrf]);
@@ -26,6 +26,12 @@ P.db1.range = [0.8, 1.2]; P.db1.step  = 0.025;
 P = MRF_get_param_dict(P, {'T2<T1'});
 look_up       = [P.T1, P.T2, P.db1];
 look_up_names = {'T1', 'T2', 'db1'};
+% look_up       = [P.T1, P.T2];
+% look_up_names = {'T1', 'T2'};
+
+% P.T1.range = [0.01,  4]; P.T1.factor = 1.025;
+% P.T2.range = [0.001, 3]; P.T2.factor = 1.025;
+% P = MRF_get_param_dict(P, {'T2<T1'});
 % look_up       = [P.T1, P.T2];
 % look_up_names = {'T1', 'T2'};
 
@@ -116,11 +122,15 @@ end
 
 % Low Rank reconstruction parameters
 params_LR = setupParameters_LowrankMRF2D( );
-params_LR.numIter          = 50;          % max number of iterations    
-params_LR.block_dim        = [6,6];       % locally low-rank patch size
-params_LR.block_step       = 6;           % overlap between local patches (if equal to patch size above, then patches are non-overlapping)
+% params_LR.numIter          = 50;          % max number of iterations    
+params_LR.numIter          = 25;          % max number of iterations    
+% params_LR.block_dim        = [6,6];       % locally low-rank patch size
+params_LR.block_dim        = [8,8];       % locally low-rank patch size
+% params_LR.block_step       = 6;           % overlap between local patches (if equal to patch size above, then patches are non-overlapping)
+params_LR.block_step       = 8;           % overlap between local patches (if equal to patch size above, then patches are non-overlapping)
 params_LR.lambdaLLR        = 0.02;        % locally low-rank regularization
 params_LR.lambdaSpatialTV  = 0.003;       % spatial TV regularization
+% params_LR.lambdaSpatialTV  = 0.001;       % spatial TV regularization
 params_LR.lambdaWav        = 0;           % wavelet regularization
 params_LR.betaMethod       = 'Dai-Yuan';
 params_LR.beta             = 0.6;
@@ -145,4 +155,5 @@ toc
 %% save results
 res.images = images;
 res.match = match;
-save(fullfile(study_path, [study_name_mrf(1:end-4), '_b1.mat']), 'res'); %, '-v7.3');
+save(fullfile(study_path, [study_name_mrf(1:end-4), '_0,003TV_25it_8blockdim.mat']), 'res'); %, '-v7.3');
+% save_study_results(study_name_mrf, res, study_path);
