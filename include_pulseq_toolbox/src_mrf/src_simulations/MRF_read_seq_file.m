@@ -113,7 +113,7 @@ SEQ.SHAPES      = read_seq_file_shapes(SEQ.FILE);
 SEQ = corr_soft_delays(SEQ, soft_delays);        % correct timings in case of soft delays
 SEQ = corr_trigger_delays(SEQ, adc_time_stamps); % correct timings in case of cardiac trigger
 SEQ = filter_kz_partitions(SEQ, kz_part);        % delete unnecessary blocks in case of kz partitions
-SEQ = correct_GE_timings(SEQ);                   % add a 117us delay for each GE TRID label
+% SEQ = correct_GE_timings(SEQ);                   % add a 117us delay for each GE TRID label
 SEQ.BLOCKS(find(SEQ.BLOCKS(:,2)==0),:) = [];     % delete blocks which only contain labels
 SEQ = delete_unnecessary_blocks(SEQ);            % delete blocks before first RF pulse and after last adc
 
